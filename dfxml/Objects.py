@@ -1581,13 +1581,16 @@ class FileObject(object):
       "alloc_inode",
       "alloc_name",
       "annos",
+      "app_name", # TL: Added app_name property
       "atime",
+      "basename", # TL: Added basename property
       "bkup_time",
       "byte_runs",
       "compressed",
       "crtime",
       "ctime",
       "data_brs",
+      "deleted_name", # TL: Added deleted_name property
       "dtime",
       "error",
       "externals",
@@ -1605,6 +1608,7 @@ class FileObject(object):
       "mtime",
       "name_brs",
       "name_type",
+      "normpath", # TL: Added normpath property
       "nlink",
       "original_fileobject",
       "orphan",
@@ -1612,6 +1616,7 @@ class FileObject(object):
       "partition",
       "seq",
       "sha1",
+      "state", # TL: Added state property
       "uid",
       "unalloc",
       "unused",
@@ -1629,7 +1634,7 @@ class FileObject(object):
       "annos",
       "byte_runs",
       "id",
-      "unalloc",
+      #"unalloc", TL: Removed this property
       "unused"
     ])
 
@@ -2022,6 +2027,9 @@ class FileObject(object):
             _append_object("parent_object", parent_object_shadow)
 
         _append_str("filename", self.filename)
+        _append_str("basename", self.basename) # TL: Added basename element to XML out
+        _append_str("normpath", self.normpath) # TL: Added normpath element to XML out        
+        _append_str("deleted_name", self.deleted_name) # TL: Added deleted_name element to XML out 
         _append_str("error", self.error)
         _append_str("partition", self.partition)
         _append_str("id", self.id)
@@ -2058,6 +2066,9 @@ class FileObject(object):
         _append_hash("md5", self.md5)
         _append_hash("sha1", self.sha1)
         _append_object("original_fileobject", self.original_fileobject, "delta:")
+        # TL: Added the following object to print XML elements
+        _append_str("app_name", self.app_name) # TL: Added app_name element to XML out
+        _append_str("state", self.state) # TL: Added state element to XML out
 
         if len(diffs_whittle_set) > 0:
             _logger.warning("Did not annotate all of the differing properties of this file.  Remaining properties:  %r." % diffs_whittle_set)
@@ -2111,6 +2122,16 @@ class FileObject(object):
     def annos(self, val):
         _typecheck(val, set)
         self._annos = val
+        
+    # TL: Added app_name property getter
+    @property
+    def app_name(self):
+        return self._app_name
+
+    # TL: Added app_name property setter
+    @app_name.setter
+    def app_name(self, val):
+        self._app_name = _strcast(val)        
 
     @property
     def atime(self):
@@ -2125,6 +2146,16 @@ class FileObject(object):
         else:
             checked_val = TimestampObject(val, name="atime")
             self._atime = checked_val
+
+    # TL: Added basename property getter
+    @property
+    def basename(self):
+        return self._basename
+
+    # TL: Added basename property setter
+    @basename.setter
+    def basename(self, val):
+        self._basename = _strcast(val)  
 
     @property
     def bkup_time(self):
@@ -2195,6 +2226,16 @@ class FileObject(object):
         if not val is None:
             _typecheck(val, ByteRuns)
         self._data_brs = val
+
+    # TL: Added deleted_name property getter
+    @property
+    def deleted_name(self):
+        return self._deleted_name
+
+    # TL: Added deleted_name property setter
+    @deleted_name.setter
+    def deleted_name(self, val):
+        self._deleted_name = _strcast(val) 
 
     @property
     def diffs(self):
@@ -2358,6 +2399,16 @@ class FileObject(object):
                 raise ValueError("Unexpected name_type received: %r (casted to %r)." % (val, cast_val))
             self._name_type = cast_val
 
+    # TL: Added normpath property getter
+    @property
+    def normpath(self):
+        return self._normpath
+
+    # TL: Added normpath property setter
+    @normpath.setter
+    def normpath(self, val):
+        self._normpath = _strcast(val) 
+
     @property
     def nlink(self):
         return self._nlink
@@ -2418,6 +2469,16 @@ class FileObject(object):
     @sha1.setter
     def sha1(self, val):
         self._sha1 = _strcast(val)
+
+    # TL: Added state property getter
+    @property
+    def state(self):
+        return self._state
+
+    # TL: Added state property setter
+    @state.setter
+    def state(self, val):
+        self._state = _strcast(val) 
 
     @property
     def uid(self):
@@ -2512,6 +2573,7 @@ class CellObject(object):
       "name_type",
       "original_cellobject",
       "parent_object",
+      "raw_data", # TL: Added raw_data element
       "root"
     ])
 
@@ -2616,6 +2678,9 @@ class CellObject(object):
                 self.data = ce.text
                 if ce.attrib.get("encoding"):
                     self.data_encoding = ce.attrib["encoding"]
+            # TL: Added raw data element to be populated
+            elif ctn == "raw_data":
+                self.raw_data = ce.text                  
             elif ctn == "data_conversions":
                 self.data_conversions = dict()
                 for cce in ce:
@@ -2724,6 +2789,7 @@ class CellObject(object):
         _append_object("mtime", self.mtime)
         _append_str("data_type", self.data_type)
         _append_str("data", self.data)
+        _append_str("raw_data", self.raw_data) # TL: Added raw data element
 
         #The experimental conversions element needs its own code
         if not self.data_conversions is None or "data_conversions" in diffs_whittle_set:
@@ -2846,6 +2912,21 @@ class CellObject(object):
 
     @data_type.setter
     def data_type(self, val):
+        # TL: Added conversion of Registry (zimmerman) Registry value data
+        # naming conventions to fit Objects.py naming conventions
+        if val == "RegNone": val = "REG_NONE"
+        if val == "RegSz": val = "REG_SZ"
+        if val == "RegExpandSz": val = "REG_EXPAND_SZ"
+        if val == "RegBinary": val = "REG_BINARY"
+        if val == "RegDword": val = "REG_DWORD"
+        if val == "RegLink": val = "REG_LINK"
+        if val == "RegMultiSz": val = "REG_MULTI_SZ"
+        if val == "RegResourceList": val = "REG_RESOURCE_LIST"  
+        if val == "RegResourceRequirementsList": val = "REG_RESOURCE_REQUIREMENTS_LIST"
+        if val == "RegQword": val = "REG_QWORD"
+        # Not 100% sure about the Registry library type of RegUnknown
+        # Lets set it to no type, just to be safe
+        if val == "RegUnknown": val = "REG_NONE"
         if not val in [
           None,
           "REG_NONE",
@@ -2854,6 +2935,8 @@ class CellObject(object):
           "REG_BINARY",
           "REG_DWORD",
           "REG_DWORD_BIG_ENDIAN",
+          "REG_DWORD_LITTLE_ENDIAN",
+          "REG_QWORD_LITTLE_ENDIAN",
           "REG_LINK",
           "REG_MULTI_SZ",
           "REG_RESOURCE_LIST",
@@ -2939,6 +3022,18 @@ class CellObject(object):
         if not val is None:
             _typecheck(val, CellObject)
         self._parent_object = val
+        
+    # TL: Added raw_data getter
+    @property
+    def raw_data(self):
+        return self._raw_data
+
+    # TL: Added raw_data setter
+    @raw_data.setter
+    def raw_data(self, val):
+        if not val is None:
+            _typecheck(val, str)
+        self._raw_data = val        
 
     @property
     def root(self):
@@ -3090,6 +3185,124 @@ def iterparse(filename, events=("start","end"), **kwargs):
             e.cmd = subp_command
             raise e
         _logger.debug("...Done.")
+        
+        
+        
+        
+def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
+    """
+    Generator.  Yields a stream of populated DFXMLObjects, VolumeObjects and FileObjects, paired with an event type ("start" or "end").  The DFXMLObject and VolumeObjects do NOT have their child lists populated with this method - that is left to the calling program.
+
+    The event type interface is meant to match the interface of ElementTree's iterparse; this is simply for familiarity's sake.  DFXMLObjects and VolumeObjects are yielded with "start" when the stream of VolumeObject or FileObjects begins - that is, they are yielded after being fully constructed up to the potentially-lengthy child object stream.  FileObjects are yielded only with "end".
+
+    @param filename: A string
+    @param events: Events.  Optional.  A tuple of strings, containing "start" and/or "end".
+    @param dfxmlobject: A DFXMLObject document.  Optional.  A DFXMLObject is created and yielded in the object stream if this argument is not supplied.
+    @param fiwalk: Optional.  Path to a particular fiwalk build you want to run.
+    """
+
+    #The DFXML stream file handle.
+    #fh = None
+    #subp = None
+    #fiwalk_path = kwargs.get("fiwalk", "fiwalk")
+    #subp_command = [fiwalk_path, "-x", filename]
+#    if filename.endswith("xml"):
+#        fh = open(filename, "rb")
+#    else:
+#        subp = subprocess.Popen(subp_command, stdout=subprocess.PIPE)
+#        fh = subp.stdout
+    fh = open(filename, "rb")
+    _events = set()
+    for e in events:
+        if not e in ("start","end"):
+            raise ValueError("Unexpected event type: %r.  Expecting 'start', 'end'." % e)
+        _events.add(e)
+
+    dobj = kwargs.get("dfxmlobject", DFXMLObject())
+    robj = kwargs.get("regxmlobject", RegXMLObject())
+    hobj = kwargs.get("hiveobject", HiveObject())
+    cobj = kwargs.get("cellobject", CellObject())
+    
+    #The only way to efficiently populate VolumeObjects is to populate the object when the stream has hit its first FileObject.
+    vobj = None
+
+    #It doesn't seem ElementTree allows fetching parents of Elements that are incomplete (just hit the "start" event).  So, build a volume Element when we've hit "<volume ... >", glomming all elements until the first fileobject is hit.
+    #Likewise with the Element for the DFXMLObject.
+    dfxml_proxy = None
+    regxml_proxy = None
+    volume_proxy = None
+    hive_proxy = None
+    msregistry_proxy = None
+
+    #State machine, used to track when the first fileobject of a volume is encountered.
+    READING_START = 0
+    READING_PRESTREAM = 1 #DFXML metadata, pre-Object stream
+    READING_VOLUMES = 2
+    READING_FILES = 3
+    READING_POSTSTREAM = 4 #DFXML metadata, post-Object stream (typically the <rusage> element)
+    _state = READING_START
+
+    for (ETevent, elem) in ET.iterparse(fh, events=("start-ns", "start", "end")):
+        #View the object event stream in debug mode
+        #_logger.debug("(event, elem) = (%r, %r)" % (ETevent, elem))
+        #if ETevent in ("start", "end"):
+        #    _logger.debug("_ET_tostring(elem) = %r" % _ET_tostring(elem))
+
+        #Track namespaces
+        if ETevent == "start-ns":
+            dobj.add_namespace(*elem)
+            ET.register_namespace(*elem)
+            continue
+
+        #Split tag name into namespace and local name
+        (ns, ln) = _qsplit(elem.tag)
+        
+        #print(ns,ln)
+
+        if ETevent == "start":
+            if ln == "msregistry" or ln == "hive":
+                if _state != READING_START:
+                    raise ValueError("Encountered a <msregistry> element, but the parser isn't in its start state.  Recursive <msregistry> declarations aren't supported at this time.")
+                hive_proxy = ET.Element(elem.tag)
+                for k in elem.attrib:
+                    hive_proxy.attrib[k] = elem.attrib[k]
+                _state = READING_PRESTREAM
+            # elif ln == "cellobject":
+                # if _state == READING_PRESTREAM:
+                    # cobj.populate_from_Element(hive_proxy)
+                    # if "start" in _events:
+                        # yield ("start", cobj)
+                # _state = READING_FILES
+                    
+        elif ETevent == "end":
+            if ln == "cellobject":
+                if _state in (READING_PRESTREAM, READING_POSTSTREAM):
+                    #This particular branch can be reached if there are trailing fileobject elements after the volume element.  This would happen if a tool needed to represent files (likely reassembled fragments) found outside all the partitions.
+                    #More frequently, we hit this point when there are no volume groupings.
+                    vobj = None
+                co = CellObject()
+                co.populate_from_Element(elem)
+                #fi.volume_object = vobj
+                #_logger.debug("fi = %r" % fi)
+                if "end" in _events:
+                    yield ("end", co)
+                #Reset
+                elem.clear()
+            elif elem.tag == "msregistry" or elem.tag == "hive":
+                if "end" in _events:
+                    yield ("end", robj)
+                _state = READING_POSTSTREAM
+            elif _state == READING_PRESTREAM:
+                if ln in ["metadata", "creator", "source"]:
+                    #This is a direct child of the DFXML document property; glom onto the proxy.
+                    if regxml_proxy is not None:
+                        regxml_proxy.append(elem)      
+        
+        
+        
+        
+        
+        
 
 def parse(filename):
     """Returns a DFXMLObject populated from the contents of the (string) filename argument."""
