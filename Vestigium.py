@@ -7,11 +7,11 @@ Website: thomaslaurenson.com
 Date:    2015/12/28
 
 Description:
-Vestigium is a proof of concept implementation of an application 
-profiling framework. The framework automates the detection of file system 
-and Windows Registry entries. All digital artifacts associated with an
-application are represented and processing automated by using the DFXML
-dtandardised forensic data abstraction. 
+Vestigium is a proof of concept implementation of an application  profiling 
+framework. The framework automates the detection of file system  and Windows 
+Registry entries. All digital artifacts associated with an application are 
+represented and processing automated by using the standardised DFXML, RegXML 
+and APXML forensic data abstractions. 
 Vestigium requires three inputs:
     1) Forensic image
     2) Output directory
@@ -85,11 +85,11 @@ if sys.version_info <= (3,0):
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser(description='''
-Vestigium is a proof of concept implementation of an application 
-profiling framework. The framework automates the detection of file system 
-and Windows Registry entries. All digital artifacts associated with an
-application are represented and processing automated by using the DFXML
-dtandardised forensic data abstraction. 
+Vestigium is a proof of concept implementation of an application  profiling 
+framework. The framework automates the detection of file system  and Windows 
+Registry entries. All digital artifacts associated with an application are 
+represented and processing automated by using the standardised DFXML, RegXML 
+and APXML forensic data abstractions. 
 Vestigium requires three inputs:
     1) Forensic image
     2) Output directory
