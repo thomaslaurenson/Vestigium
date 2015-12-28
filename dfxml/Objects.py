@@ -2650,8 +2650,9 @@ class CellObject(object):
                 continue
             if oval != sval:
                 #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
-                if propname == "cellpath":
-                    continue
+                # TL: Might need mdofication here for diff
+                #if propname == "cellpath":
+                #    continue
                 diffs.add(propname)
 
         return diffs

@@ -1,4 +1,7 @@
-# TRUECRYPT: TEST CASES
+# TEST CASES:
+# Known data sets
+
+# TRUECRYPT
 python3.4 Vestigium.py /media/forensic/PHD/known_data_sets/TC-7-32/1-install.raw TCinstall /media/forensic/PHD/application_profiles/apxmls_demonstration/data_final/TrueCrypt-7.1a-6.1.7601-FINAL.apxml --dfxml /media/forensic/PHD/known_data_sets/TC-7-32/1-install.xml --hives /media/forensic/PHD/known_data_sets/TC-7-32/1-install/
 
 python3.4 Vestigium.py /media/forensic/PHD/known_data_sets/TC-7-32/2-open.raw TCopen /media/forensic/PHD/application_profiles/apxmls_demonstration/data_final/TrueCrypt-7.1a-6.1.7601-FINAL.apxml --dfxml /media/forensic/PHD/known_data_sets/TC-7-32/2-open.xml --hives /media/forensic/PHD/known_data_sets/TC-7-32/2-open/

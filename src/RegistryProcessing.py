@@ -164,6 +164,9 @@ class RegistryProcessing():
         # For example: "install" => [cellobject, cellobject] """
         self.pcos_dict = collections.defaultdict(list)
         
+        self.pcos_keys = collections.defaultdict(list)
+        self.pcos_values = collections.defaultdict(list)
+        
         # Set of target hive files to process
         self.target_hives = set()
         
@@ -226,6 +229,11 @@ class RegistryProcessing():
                     # 2) PCO dictionary
                     self.pcos.append(pco)
                     self.pcos_dict[pco.normpath].append(pco)
+                    
+                    if pco.name_type == "k":
+                        self.pcos_keys[pco.normpath].append(pco)
+                    elif pco.name_type == "v":
+                        self.pcos_values[pco.normpath].append(pco)
                     
                     # Get set of required hives based on profile entries
                     #rootkey = pco.normpath.split("\\")[0]
@@ -303,15 +311,31 @@ class RegistryProcessing():
             normbasename = normbasename.replace('/', '\\')
             tco.normbasename = normbasename
         
+        if tco.name_type == 'k':
+            if tco.normpath in self.pcos_keys:
+                for pco in self.pcos_keys[tco.normpath]:
+                    self.match_tco_pco(tco, pco)
+                
+        if tco.name_type == 'v':
+            if tco.normpath in self.pcos_values:
+                for pco in self.pcos_values[tco.normpath]:
+                    self.match_tco_pco(tco, pco)
+                    
         # Perform a cell path lookup in self.pcos_dict
         # If a match is found, process further using match_tco_pco()
-        logging.info
-        if tco.normpath in self.pcos_dict:
-            for pco in self.pcos_dict[tco.normpath]:
-                if pco.rootkey == tco.rootkey:
-                    self.match_tco_pco(tco, pco)
+        #for pco in self.pcos:
+        #    if pco.name_type == tco.name_type:
+        #        if pco.rootkey == tco.rootkey:
+        #            if pco.alloc == tco.alloc:
+        #                self.match_tco_pco(tco, pco)
+        
+        # CANT DO A PATH LOOKUP WITH A BASENAME PROBLEM                        
+                      
+        #if tco.normpath in self.pcos_dict:
+        #    for pco in self.pcos_dict[tco.normpath]:
+        #        if pco.rootkey == tco.rootkey:
+        #            self.match_tco_pco(tco, pco)
 
-###############################################################################
     def match_tco_pco(self, tco, pco):
         """ Match the target cellobject to the profile cellobject. """
         
@@ -323,7 +347,7 @@ class RegistryProcessing():
         if tco.name_type == "k":
             if (match_cell_path(tco, pco) and 
                 match_cell_alloc(tco, pco)):
-                #print("FOUND KEY: %s" % tco.normpath)
+                ##print("FOUND KEY: %s" % tco.normpath)
                 
                 # Add in matched annotation, append matched PCO
                 tco.annos = {"matched"}
@@ -347,7 +371,7 @@ class RegistryProcessing():
                 match_data_type(tco, pco) and
                 match_data(tco, pco) and 
                 match_cell_alloc(tco, pco)):
-                #print("FOUND VALUE: %s" % tco.normpath)
+                ##print("FOUND VALUE: %s" % tco.normpath)
                 
                 # Add in matched annotation, append matched PCO
                 tco.annos = {"matched"}
@@ -368,7 +392,7 @@ class RegistryProcessing():
             elif (match_cell_path(tco, pco) and
                   match_data_type(tco, pco) and
                   match_cell_alloc(tco, pco)):
-                #print("FOUND VALUE: %s" % tco.normpath)
+                ##print("FOUND SOFT VALUE: %s" % tco.normpath)
                 
                 # Add in matched annotation, append matched PCO, active hive file name
                 tco.annos = {"matched_soft"}
