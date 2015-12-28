@@ -156,6 +156,9 @@ class RegistryProcessing():
         print("\n----------------------------------------")
         print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
         print("----------------------------------------")
+        logging.info("\n----------------------------------------")
+        logging.info(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
+        logging.info("----------------------------------------")        
 
         # List of Profile CellObjects
         self.pcos = list()
@@ -205,7 +208,7 @@ class RegistryProcessing():
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("  > Processing %s" % os.path.basename(profile))
+            print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
@@ -259,6 +262,7 @@ class RegistryProcessing():
         Introduce.
         """
         print("\n>>> Processing target hives ...")
+        logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         
         self.to_process = collections.defaultdict(list)
         
@@ -383,7 +387,7 @@ class RegistryProcessing():
                 tco.active_hive = self.active_hive
                 
                 # Log matched entries, append matched TCO to matches
-                logging.info("  > VALUE: %s\t%s" % (tco.cellpath, 
+                logging.info("  > VALUE HARD: %s\t%s" % (tco.cellpath, 
                                                     tco.alloc))
                 logging.info("           %s\t%s\t%s\t%s" % (pco.app_name,
                                                             pco.state,
@@ -404,7 +408,7 @@ class RegistryProcessing():
                 tco.active_hive = self.active_hive
                 
                 # Log matched entries, append matched TCO to matches
-                logging.info("  > VALUE: %s\t%s" % (tco.cellpath, 
+                logging.info("  > VALUE SOFT: %s\t%s" % (tco.cellpath, 
                                                     tco.alloc))
                 logging.info("           %s\t%s\t%s\t%s" % (pco.app_name,
                                                             pco.state,
@@ -415,7 +419,7 @@ class RegistryProcessing():
 
     def results(self):
         # Provide overview of results
-        print("\n>>> Windows Registry Analysis Overview:")    
+        print("\n\n>>> Windows Registry Analysis Overview:")    
         profile_states = [pco.state for pco in self.pcos]
         target_states = [tco.original_cellobject.state for tco in self.matches]
         for state in set(profile_states):
@@ -443,14 +447,12 @@ class RegistryProcessing():
                 notfound.append(pco)
                   
         # Log found PCOs  
-        logging.info("\n>>> Windows Registry Entries - Detected:")
-        logging.info("  > Total: %d" % len(found))
+        logging.info("\n>>> Windows Registry Entries - Detected: %d" % len(found))
         for pco in found:
             logging.info("    %s\t%s\t%s" % (pco.app_name, pco.state, pco.normpath))
 
         # Log notfound PCOs
-        logging.info("\n>>> Windows Registry Entries - NOT Detected:")
-        logging.info("  > Total: %d" % len(notfound))
+        logging.info("\n>>> Windows Registry Entries - NOT Detected: %d" % len(notfound))
         for pco in notfound:
             logging.info("    %s\t%s\t%s" % (pco.app_name, pco.state, pco.normpath))
 

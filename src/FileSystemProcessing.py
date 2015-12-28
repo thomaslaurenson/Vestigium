@@ -131,6 +131,9 @@ class FileSystemProcessing():
         print("\n-----------------------------------")
         print(">>> PERFORMING FILE SYSTEM ANALYSIS")
         print("-----------------------------------")
+        logging.info("\n-----------------------------------")
+        logging.info(">>> PERFORMING FILE SYSTEM ANALYSIS")
+        logging.info("-----------------------------------")        
 
         # List of Profile FileObjects (PFOs)
         self.pfos = list()
@@ -173,7 +176,7 @@ class FileSystemProcessing():
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("  > Processing %s" % os.path.basename(profile))
+            print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
@@ -412,7 +415,7 @@ class FileSystemProcessing():
             logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.state, pfo.normpath))
             
     def results_overview(self):
-        print("\n>>> File System Analysis Overview:")
+        print("\n\n>>> File System Analysis Overview:")
         
         # Provide overview of results
         profile_states = [pfo.state for pfo in self.pfos]
