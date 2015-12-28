@@ -160,7 +160,8 @@ class FileSystemProcessing():
         self.matches = list()
         
         # Counter for target FileObjects to display progress
-        self.target_fi_count = 0
+        self.target_file_count = 0
+        self.target_dir_count = 0
 
     def process_apxmls(self):
         """
@@ -248,10 +249,13 @@ class FileSystemProcessing():
 
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
-        # Print the file count progression
-        self.target_fi_count += 1
-        if self.target_fi_count % 5000 == 0:
-            print("    Processed {0:6} files from target files".format(self.target_fi_count))      
+        
+        # File system count progress indicator
+        if tfo.meta_type == 2:
+            self.target_dir_count += 1
+        elif tfo.meta_type == 1:
+            self.target_file_count += 1        
+        sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}".format(self.target_dir_count, self.target_file_count));
              
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):

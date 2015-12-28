@@ -55,3 +55,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Vestigium output directory for testing purposes
+output/

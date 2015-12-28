@@ -186,7 +186,8 @@ class RegistryProcessing():
         self.matches = list()
         
         # Counter for target CellObjects to display progress
-        self.target_co_count = 0                   
+        self.target_key_count = 0
+        self.target_value_count = 0                
         
         # active_hive specifies the hive name (base name) for the hive being processed
         self.active_hive = None
@@ -281,7 +282,7 @@ class RegistryProcessing():
             #    continue
                       
             for hive in self.to_process[rootkey]:
-                print("  > %s" % os.path.basename(hive))
+                #print("  > %s" % os.path.basename(hive))
                 self.active_hive = hive
                 self.active_rootkey = rootkey
                 
@@ -292,11 +293,14 @@ class RegistryProcessing():
                         self.process_target_co(obj)
 
     def process_target_co(self, tco):
-        """ Process each Target CellObject (TCO). """
-        # Print the file count progression
-        self.target_co_count += 1
-        if self.target_co_count % 20000 == 0:
-            print("    Processed {0:6} cells from target hives".format(self.target_co_count))
+        """ Process each Target CellObject (TCO). """    
+        
+        # Registry count progress indicator
+        if tco.name_type == 'k':
+            self.target_key_count += 1
+        elif tco.name_type == 'v':
+            self.target_value_count += 1
+        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}".format(self.target_key_count, self.target_value_count));
             
         # Normalize the TCO rootkey
         tco.normpath = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath, self.active_rootkey)

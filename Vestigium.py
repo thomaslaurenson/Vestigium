@@ -197,6 +197,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.results()
     
     #"""
+    #quit()
     ###################################
     # Perform Windows Registry analysis
     ###################################
