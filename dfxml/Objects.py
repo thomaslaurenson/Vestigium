@@ -1644,7 +1644,8 @@ class FileObject(object):
       "renamed":"delta:renamed_file",
       "changed":"delta:changed_file",
       "modified":"delta:modified_file",
-      "matched":"delta:matched"
+      "matched":"delta:matched",
+      "matched_soft":"delta:matched_soft"
     }
 
     def __init__(self, *args, **kwargs):
@@ -2560,6 +2561,7 @@ class CellObject(object):
 
     _all_properties = set([
       "alloc",
+      "app_name", # TL: Added app_name property
       "annos",
       "basename",
       "byte_runs",
@@ -2571,10 +2573,13 @@ class CellObject(object):
       "error",
       "mtime",
       "name_type",
+      "normpath", # TL: Added normpath property
+      "normbaseame", # TL: Added normbasename property
       "original_cellobject",
       "parent_object",
       "raw_data", # TL: Added raw_data element
-      "root"
+      "root",
+      "state" # TL: Added state property
     ])
 
     _diff_attr_names = {
@@ -2582,7 +2587,8 @@ class CellObject(object):
       "deleted":"delta:deleted_cell",
       "changed":"delta:changed_cell",
       "modified":"delta:modified_cell",
-      "matched":"delta:matched"
+      "matched":"delta:matched",
+      "matched_soft":"delta:matched_soft"
     }
 
     #TODO There may be need in the future to compare the annotations as well.
@@ -2644,6 +2650,8 @@ class CellObject(object):
                 continue
             if oval != sval:
                 #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
+                if propname == "cellpath":
+                    continue
                 diffs.add(propname)
 
         return diffs
@@ -2768,12 +2776,18 @@ class CellObject(object):
 
                 outel.append(tmpel)
 
-        def _append_object(name, value):
+        def _append_object(name, value, namespace_prefix=None): # TL: Added prefix
             if not value is None or name in diffs_whittle_set:
                 if value is None:
                     tmpel = ET.Element(name)
                 else:
                     tmpel = value.to_Element()
+                    # TL: Added for prefix support
+                #Set the tag name here for properties like parent_object, a FileObject without being wholly a FileObject.
+                if namespace_prefix:
+                    tmpel.tag = namespace_prefix + name
+                else:
+                    tmpel.tag = name                    
                 _anno_change(tmpel)
                 outel.append(tmpel)
 
@@ -2782,6 +2796,8 @@ class CellObject(object):
             outel.attrib["root"] = str(self.root)
 
         _append_str("cellpath", self.cellpath)
+        _append_str("normpath", self.normpath) # TL: Added normpath element to XML out
+        _append_str("normbasename", self.normbasename) # TL: Added normbasename element to XML out
         _append_str("basename", self.basename)
         _append_str("error", self.error)
         _append_str("name_type", self.name_type)
@@ -2790,7 +2806,9 @@ class CellObject(object):
         _append_str("data_type", self.data_type)
         _append_str("data", self.data)
         _append_str("raw_data", self.raw_data) # TL: Added raw data element
-
+        _append_str("app_name", self.app_name) # TL: Added app_name element to XML out
+        _append_str("state", self.state) # TL: Added state element to XML out
+        
         #The experimental conversions element needs its own code
         if not self.data_conversions is None or "data_conversions" in diffs_whittle_set:
             tmpel = ET.Element("data_conversions")
@@ -2815,8 +2833,9 @@ class CellObject(object):
             outel.append(tmpel)
 
         _append_object("byte_runs", self.byte_runs)
-        _append_object("original_cellobject", self.original_cellobject)
-
+        #_append_object("original_cellobject", self.original_cellobject)
+        # TL: Added delta to original cellobject for printing
+        _append_object("original_cellobject", self.original_cellobject, "delta:")
         if len(diffs_whittle_set) > 0:
             _logger.warning("Did not annotate all of the differing properties of this file.  Remaining properties:  %r." % diffs_whittle_set)
 
@@ -2842,6 +2861,16 @@ class CellObject(object):
     def annos(self, val):
         _typecheck(val, set)
         self._annos = val
+
+    # TL: Added app_name property getter
+    @property
+    def app_name(self):
+        return self._app_name
+
+    # TL: Added app_name property setter
+    @app_name.setter
+    def app_name(self, val):
+        self._app_name = _strcast(val) 
 
     @property
     def basename(self):
@@ -3002,6 +3031,26 @@ class CellObject(object):
             assert val in ["k", "v"]
         self._name_type = val
 
+    # TL: Added normpath property getter
+    @property
+    def normpath(self):
+        return self._normpath
+
+    # TL: Added normpath property setter
+    @normpath.setter
+    def normpath(self, val):
+        self._normpath = _strcast(val) 
+
+    # TL: Added normbasename property getter
+    @property
+    def normbasename(self):
+        return self._normbasename
+
+    # TL: Added normbasename property setter
+    @normbasename.setter
+    def normbasename(self, val):
+        self._normbasename = _strcast(val) 
+        
     @property
     def original_cellobject(self):
         return self._original_cellobject
@@ -3043,6 +3092,15 @@ class CellObject(object):
     def root(self, val):
         self._root = _boolcast(val)
 
+    # TL: Added state property getter
+    @property
+    def state(self):
+        return self._state
+
+    # TL: Added state property setter
+    @state.setter
+    def state(self, val):
+        self._state = _strcast(val) 
 
 def iterparse(filename, events=("start","end"), **kwargs):
     """
