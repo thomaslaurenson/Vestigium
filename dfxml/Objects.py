@@ -2562,24 +2562,24 @@ class CellObject(object):
     _all_properties = set([
       "alloc",
       "app_name", # TL: Added app_name property
+      "app_state", # TL: Added app_state property
       "annos",
       "basename",
+      "basename_norm", # TL: Added basename_norm property      
       "byte_runs",
       "cellpath",
+      "cellpath_norm", # TL: Added cellpath_norm property      
       "data",
       "data_conversions",
       "data_encoding",
+      "data_raw", # TL: Added data_raw element      
       "data_type",
       "error",
       "mtime",
       "name_type",
-      "normpath", # TL: Added normpath property
-      "normbaseame", # TL: Added normbasename property
       "original_cellobject",
       "parent_object",
-      "raw_data", # TL: Added raw_data element
-      "root",
-      "state" # TL: Added state property
+      "root"
     ])
 
     _diff_attr_names = {
@@ -2588,7 +2588,7 @@ class CellObject(object):
       "changed":"delta:changed_cell",
       "modified":"delta:modified_cell",
       "matched":"delta:matched",
-      "matched_soft":"delta:matched_soft"
+      "matched_soft":"delta:matched_soft" # TL: Added a soft match delta
     }
 
     #TODO There may be need in the future to compare the annotations as well.
@@ -2634,7 +2634,7 @@ class CellObject(object):
     def compare_to_original(self):
         self._diffs = self.compare_to_other(self.original_cellobject, True)
 
-    def compare_to_other(self, other, ignore_original=False, ignore_vestigium=False):
+    def compare_to_other(self, other, ignore_original=False, ignore_properties=set()):
         _typecheck(other, CellObject)
 
         diffs = set()
@@ -2644,16 +2644,17 @@ class CellObject(object):
                 continue
             if ignore_original and propname == "original_cellobject":
                 continue
+            # TL: Added ignore_properties check
+            # Can pass a set() of properties to ignore
+            # e.g., {"cellpath", "basename"}
+            if propname in ignore_properties:
+                continue           
             oval = getattr(other, propname)
             sval = getattr(self, propname)
             if oval is None and sval is None:
                 continue
             if oval != sval:
                 #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
-                # TL: Might need mdofication here for diff
-                #if ignore_vestigium:
-                #    if propname == "cellpath" or propname == "basename":
-                #        continue
                 diffs.add(propname)
 
         return diffs
@@ -2679,18 +2680,24 @@ class CellObject(object):
                 self.alloc = ce.text
             elif ctn == "basename":
                 self.basename = ce.text
+            # TL: Added basename_norm to be populated
+            elif ctn == "basename_norm":
+                self.basename_norm = ce.text                
             elif ctn == "byte_runs":
                 self.byte_runs = ByteRuns()
                 self.byte_runs.populate_from_Element(ce)
             elif ctn == "cellpath":
                 self.cellpath = ce.text
+            # TL: Added cellpath_norm to be populated                
+            elif ctn == "cellpath_norm":
+                self.cellpath_norm = ce.text                
             elif ctn == "data":
                 self.data = ce.text
                 if ce.attrib.get("encoding"):
                     self.data_encoding = ce.attrib["encoding"]
             # TL: Added raw data element to be populated
-            elif ctn == "raw_data":
-                self.raw_data = ce.text                  
+            elif ctn == "data_raw":
+                self.data_raw = ce.text                  
             elif ctn == "data_conversions":
                 self.data_conversions = dict()
                 for cce in ce:
@@ -2798,18 +2805,18 @@ class CellObject(object):
             outel.attrib["root"] = str(self.root)
 
         _append_str("cellpath", self.cellpath)
-        _append_str("normpath", self.normpath) # TL: Added normpath element to XML out
-        _append_str("normbasename", self.normbasename) # TL: Added normbasename element to XML out
+        _append_str("cellpath_norm", self.cellpath_norm) # TL: Added cellpath_norm to XML out
         _append_str("basename", self.basename)
+        _append_str("basename_norm", self.basename_norm) # TL: Added basename_norm to XML out
         _append_str("error", self.error)
         _append_str("name_type", self.name_type)
         _append_bool("alloc", self.alloc)
         _append_object("mtime", self.mtime)
         _append_str("data_type", self.data_type)
         _append_str("data", self.data)
-        _append_str("raw_data", self.raw_data) # TL: Added raw data element
-        _append_str("app_name", self.app_name) # TL: Added app_name element to XML out
-        _append_str("state", self.state) # TL: Added state element to XML out
+        _append_str("data_raw", self.raw_data) # TL: Added data_raw to XML out
+        _append_str("app_name", self.app_name) # TL: Added app_name to XML out
+        _append_str("app_state", self.app_state) # TL: Added app_state to XML out
         
         #The experimental conversions element needs its own code
         if not self.data_conversions is None or "data_conversions" in diffs_whittle_set:
@@ -2872,7 +2879,17 @@ class CellObject(object):
     # TL: Added app_name property setter
     @app_name.setter
     def app_name(self, val):
-        self._app_name = _strcast(val) 
+        self._app_name = _strcast(val)
+        
+    # TL: Added app_state property getter
+    @property
+    def app_state(self):
+        return self._app_state
+
+    # TL: Added app_state property setter
+    @app_state.setter
+    def app_state(self, val):
+        self._app_state = _strcast(val)         
 
     @property
     def basename(self):
@@ -2883,6 +2900,16 @@ class CellObject(object):
         if not val is None:
             _typecheck(val, str)
         self._basename = val
+
+    # TL: Added basename_norm property getter
+    @property
+    def basename_norm(self):
+        return self._basename_norm
+
+    # TL: Added basename_norm property setter
+    @basename_norm.setter
+    def basename_norm(self, val):
+        self._basename_norm = _strcast(val)         
 
     @property
     def byte_runs(self):
@@ -2903,6 +2930,16 @@ class CellObject(object):
         if not val is None:
             _typecheck(val, str)
         self._cellpath = val
+        
+    # TL: Added cellpath_norm property getter
+    @property
+    def cellpath_norm(self):
+        return self._cellpath_norm
+
+    # TL: Added cellpath_norm property setter
+    @cellpath_norm.setter
+    def cellpath_norm(self, val):
+        self._cellpath_norm = _strcast(val)        
 
     @property
     def data(self):
@@ -2935,6 +2972,18 @@ class CellObject(object):
         if not val is None:
             _typecheck(val, str)
         self._data_encoding = val
+
+    # TL: Added data_raw getter
+    @property
+    def data_raw(self):
+        return self._data_raw
+
+    # TL: Added data_raw setter
+    @data_raw.setter
+    def data_raw(self, val):
+        if not val is None:
+            _typecheck(val, str)
+        self._data_raw = val 
 
     @property
     def data_type(self):
@@ -3032,27 +3081,7 @@ class CellObject(object):
         if not val is None:
             assert val in ["k", "v"]
         self._name_type = val
-
-    # TL: Added normpath property getter
-    @property
-    def normpath(self):
-        return self._normpath
-
-    # TL: Added normpath property setter
-    @normpath.setter
-    def normpath(self, val):
-        self._normpath = _strcast(val) 
-
-    # TL: Added normbasename property getter
-    @property
-    def normbasename(self):
-        return self._normbasename
-
-    # TL: Added normbasename property setter
-    @normbasename.setter
-    def normbasename(self, val):
-        self._normbasename = _strcast(val) 
-        
+       
     @property
     def original_cellobject(self):
         return self._original_cellobject
@@ -3072,19 +3101,7 @@ class CellObject(object):
     def parent_object(self, val):
         if not val is None:
             _typecheck(val, CellObject)
-        self._parent_object = val
-        
-    # TL: Added raw_data getter
-    @property
-    def raw_data(self):
-        return self._raw_data
-
-    # TL: Added raw_data setter
-    @raw_data.setter
-    def raw_data(self, val):
-        if not val is None:
-            _typecheck(val, str)
-        self._raw_data = val        
+        self._parent_object = val    
 
     @property
     def root(self):
@@ -3093,16 +3110,6 @@ class CellObject(object):
     @root.setter
     def root(self, val):
         self._root = _boolcast(val)
-
-    # TL: Added state property getter
-    @property
-    def state(self):
-        return self._state
-
-    # TL: Added state property setter
-    @state.setter
-    def state(self, val):
-        self._state = _strcast(val) 
 
 def iterparse(filename, events=("start","end"), **kwargs):
     """
