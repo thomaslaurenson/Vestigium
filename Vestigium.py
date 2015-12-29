@@ -179,7 +179,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     logging.info("    Timestamp:        %s" % timestamp)
     logging.info("    Zap Output (dir): %s" % zapdir)
 
-    """
+    #"""
     ##############################
     # Perform file system analysis
     ##############################
@@ -196,8 +196,8 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.dfxml_report()
     fs.results()
     
-    """
-    #quit()
+    #"""
+    quit()
     ###################################
     # Perform Windows Registry analysis
     ###################################

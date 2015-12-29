@@ -96,9 +96,9 @@ def ptime(self, t):
     else:
         return str(t.iso8601())    
 
-def match_normpath(tfo, pfo):
+def match_filename_norm(tfo, pfo):
     """ Compare fullpath of target fileobejct to profile filobject. """
-    return tfo.normpath == pfo.normpath
+    return tfo.filename_norm == pfo.filename_norm
 
 def match_hash(tfo, pfo):
     """ Compare SHA-1 hash of target fileobejct to profile filobject. """
@@ -185,18 +185,18 @@ class FileSystemProcessing():
                 if isinstance(pfo, Objects.FileObject):
                     
                     # Normalize the file path and append to FileObject
-                    pfo.normpath = self.file_path_normalizer.normalize(pfo.filename)
+                    pfo.filename_norm = self.file_path_normalizer.normalize(pfo.filename)
                     
                     # Add basename to FileObject
-                    if pfo.meta_type == 1 
+                    if pfo.meta_type == 1:
                         split = pfo.filename.split("\\")
                         pfo.basename = split[len(split) - 1]
                     
-                    # If the PFO is unallocated, add a deleted_name element
+                    # If the PFO is unallocated, add a orphan_name element
                     # This is to adhere to deleted file naming conventions in TSK
                     if not pfo.is_allocated() and pfo.meta_type == 1:
                         split = pfo.filename.split("\\")
-                        pfo.deleted_name = "$OrphanFiles/" + split[len(split) - 1]
+                        pfo.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
                     
                     # Fix case sensitivity for SHA1
                     if pfo.sha1 is not None:
@@ -212,14 +212,14 @@ class FileSystemProcessing():
                     # 4) PFO SHA-1 dictionary
                     # 5) PFO DFXMLObject
                     self.pfos.append(pfo)
-                    self.pfos_dict[pfo.normpath].append(pfo)
-                    self.pfos_filenames.add(pfo.normpath)
+                    self.pfos_dict[pfo.filename_norm].append(pfo)
+                    self.pfos_filenames.add(pfo.filename_norm)
                     if pfo.meta_type == 1 and pfo.sha1 is not None:
                         self.pfos_hashes[pfo.sha1].append(pfo)
                     self.pfo_dfxml.append(pfo)
                     
                     # Log all profile entries (Application, State, Path)
-                    logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name, pfo.state, pfo.normpath))
+                    logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name, pfo.app_state, pfo.filename_norm))
 
     
     def process_target(self):
@@ -275,7 +275,7 @@ class FileSystemProcessing():
         """
 
         # Normalize the TFO full path/filename
-        tfo.normpath = self.file_path_normalizer.normalize(tfo.filename)
+        tfo.filename_norm = self.file_path_normalizer.normalize(tfo.filename)
         
         # Add basename to TFO FileObject
         split = tfo.filename.split("/")
@@ -283,45 +283,45 @@ class FileSystemProcessing():
 
         #### Start file system matching
         # 1) First check: Match directories and data files  
-        if tfo.normpath in self.pfos_dict:
+        if tfo.filename_norm in self.pfos_dict:
             
             # Match file system directories
             if tfo.meta_type == 2:
-                for pfo in self.pfos_dict[tfo.normpath]:
+                for pfo in self.pfos_dict[tfo.filename_norm]:
                     if self.match_dir(tfo, pfo):
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         logging.info("  > DIRECTORY: %s\t%s" % (tfo.filename, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.normpath, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
             
             # Match file system data files
             elif tfo.meta_type == 1:
-                for pfo in self.pfos_dict[tfo.normpath]:
+                for pfo in self.pfos_dict[tfo.filename_norm]:
                     rank = self.match_file(tfo, pfo)
                     if rank == 1:
                         tfo.annos = {"matched_soft"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         logging.info("  > FILE SOFT: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.normpath, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
                     if rank == 2:
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         logging.info("  > FILE HARD: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.normpath, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
 
         # 2) Second check: Match orphaned directories and data files ($OrphanFiles)
         elif not tfo.alloc:
             #print(tfo.filename)
-            #pfo.deleted_name
+            #pfo.orphan_name
             for pfos in self.pfos_dict.values():
                 for pfo in pfos:
-                    if (tfo.filename == pfo.deleted_name and
+                    if (tfo.filename == pfo.orphan_name and
                         match_hash(tfo,pfo) and
                         match_size(tfo, pfo) and
                         match_allocation(tfo, pfo)):
@@ -329,7 +329,7 @@ class FileSystemProcessing():
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         logging.info("  > FILE ORPH: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.normpath, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
 
         # 3) Third check: Perform a SHA-1 and basename check
@@ -341,22 +341,22 @@ class FileSystemProcessing():
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         logging.info("  > FILE SHA1: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.normpath, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
 
 
     def match_dir(self, tfo, pfo):
         """ Match a directory artifact. """
-        return match_normpath(tfo, pfo) and match_allocation(tfo, pfo)
+        return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
 
     
     def match_file(self, tfo, pfo):
         """ Match a data file artifact. """          
-        if (match_normpath(tfo, pfo) and
+        if (match_filename_norm(tfo, pfo) and
             match_hash(tfo,pfo) and
             match_size(tfo, pfo) and
             match_allocation(tfo, pfo)):
             return 2
-        elif (match_normpath(tfo, pfo) and
+        elif (match_filename_norm(tfo, pfo) and
               match_allocation(tfo, pfo)):
             return 1
         else:
@@ -368,8 +368,8 @@ class FileSystemProcessing():
         
         # Log results overview
         logging.info("\n>>> File System Analysis Overview:")
-        profile_states = [pfo.state for pfo in self.pfos]
-        target_states = [tfo.original_fileobject.state for tfo in self.matches]
+        profile_states = [pfo.app_state for pfo in self.pfos]
+        target_states = [tfo.original_fileobject.app_state for tfo in self.matches]
         for state in set(profile_states):
             logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
@@ -397,19 +397,19 @@ class FileSystemProcessing():
         # Log found PFOs  
         logging.info("\n>>> File System Entries - Detected: %d" % len(found))
         for pfo in found:
-            logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.state, pfo.normpath))
+            logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
 
         # Log notfound PFOs
         logging.info("\n>>> File System Entries - NOT Detected: %d" % len(notfound))
         for pfo in notfound:
-            logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.state, pfo.normpath))
+            logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
             
     
     def results_overview(self):
         """ Print overview of results to console. """
         print("\n>>> File System Analysis Overview:")
-        profile_states = [pfo.state for pfo in self.pfos]
-        target_states = [tfo.original_fileobject.state for tfo in self.matches]
+        profile_states = [pfo.app_state for pfo in self.pfos]
+        target_states = [tfo.original_fileobject.app_state for tfo in self.matches]
         for state in set(profile_states):
             print("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),

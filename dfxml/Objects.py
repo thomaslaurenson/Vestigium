@@ -2074,7 +2074,7 @@ class FileObject(object):
         _append_object("original_fileobject", self.original_fileobject, "delta:")
         # TL: Added the following object to print XML elements
         _append_str("app_name", self.app_name) # TL: Added app_name to XML out
-        _append_str("app_state", self.state) # TL: Added app_state to XML out
+        _append_str("app_state", self.app_state) # TL: Added app_state to XML out
 
         if len(diffs_whittle_set) > 0:
             _logger.warning("Did not annotate all of the differing properties of this file.  Remaining properties:  %r." % diffs_whittle_set)

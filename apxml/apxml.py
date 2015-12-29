@@ -234,14 +234,14 @@ class APXMLObject(object):
     def objs_to_Element(self, phase):
         outel = ET.Element(phase)
         for fi in self._files:
-            if fi.state == phase:
+            if fi.app_state == phase:
                 outel.append(fi.to_Element())
         for cell in self._cells:
-            if cell.state == phase:
+            if cell.app_state == phase:
                 outel.append(cell.to_Element())                
         return outel
 
-    def populate_from_Element(self, e, state):
+    def populate_from_Element(self, e, app_state):
         """ Populate FileObjects and CellObjects from an APXML child element. """
         _typecheck(e, (ET.Element, ET.ElementTree))
         (ns, tn) = _qsplit(e.tag)
@@ -254,12 +254,12 @@ class APXMLObject(object):
                 if ctn == "fileobject":
                     fi = Objects.FileObject()
                     fi.populate_from_Element(ce)
-                    fi.state = state
+                    fi.app_state = app_state
                     self._files.append(fi)
                 elif ctn == "cellobject":
                     cell = Objects.CellObject()
                     cell.populate_from_Element(ce)
-                    cell.state = state
+                    cell.app_state = app_state
                     self._cells.append(cell)
 
     # version setter and getter
@@ -583,34 +583,34 @@ def generate_stats(apxml_obj):
             # Process file system file entry
             if obj.meta_type == 1:
                 apxml_obj.stats.cFSFiles += 1
-                apxml_obj.stats.cFSFilesState[obj.state] += 1
+                apxml_obj.stats.cFSFilesState[obj.app_state] += 1
                 for delta in obj.annos:
                     apxml_obj.stats.cFSFilesDelta[delta] += 1
-                    apxml_obj.stats.cFSFilesStateDelta[obj.state].append(delta)
+                    apxml_obj.stats.cFSFilesStateDelta[obj.app_state].append(delta)
             # Process file system directory
             elif obj.meta_type == 2:
                 apxml_obj.stats.cFSDirs += 1
-                apxml_obj.stats.cFSDirsState[obj.state] += 1
+                apxml_obj.stats.cFSDirsState[obj.app_state] += 1
                 for delta in obj.annos:
                     apxml_obj.stats.cFSDirsDelta[delta] += 1
-                    apxml_obj.stats.cFSDirsStateDelta[obj.state].append(delta)
+                    apxml_obj.stats.cFSDirsStateDelta[obj.app_state].append(delta)
 
         if isinstance(obj, Objects.CellObject):
             apxml_obj.stats.cREG += 1
             # Process Registry key
             if obj.name_type == "k": 
                 apxml_obj.stats.cREGKeys += 1
-                apxml_obj.stats.cREGKeysState[obj.state] += 1
+                apxml_obj.stats.cREGKeysState[obj.app_state] += 1
                 for delta in obj.annos:
                     apxml_obj.stats.cREGKeysDelta[delta] += 1
-                    apxml_obj.stats.cREGKeysStateDelta[obj.state].append(delta)
+                    apxml_obj.stats.cREGKeysStateDelta[obj.app_state].append(delta)
             # Process Registry value
             elif obj.name_type == "v":
                 apxml_obj.stats.cREGValues += 1
-                apxml_obj.stats.cREGValuesState[obj.state] += 1
+                apxml_obj.stats.cREGValuesState[obj.app_state] += 1
                 for delta in obj.annos:
                     apxml_obj.stats.cREGValuesDelta[delta] += 1
-                    apxml_obj.stats.cREGValuesStateDelta[obj.state].append(delta)
+                    apxml_obj.stats.cREGValuesStateDelta[obj.app_state].append(delta)
         
 ################################################################################
 def iterparse(filename, events=("start", "end"), **kwargs):
@@ -623,6 +623,7 @@ def iterparse(filename, events=("start", "end"), **kwargs):
                      "publisher",
                      "app_name",
                      "app_version",
+                     "app_state",
                      "program",
                      "version",
                      "windows_version",
@@ -633,6 +634,7 @@ def iterparse(filename, events=("start", "end"), **kwargs):
                      "creator",
                      "fileobject",
                      "filename",
+                     "filename_norm",
                      "filesize",
                      "meta_type",
                      "alloc_name",
@@ -640,9 +642,12 @@ def iterparse(filename, events=("start", "end"), **kwargs):
                      "hashdigest",
                      "cellobject",
                      "cellpath",
+                     "cellpath_norm",
                      "basename",
+                     "basename_norm",
                      "name_type",
                      "data_type",
+                     "data_raw",
                      "data",
                      "alloc",
                      "rusage"]
