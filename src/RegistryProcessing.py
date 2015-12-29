@@ -119,7 +119,7 @@ def ptime(self, t):
 def match_cell_path(tco, pco):
     """ Match the full path of target cellobject (tco) against the
         profile cellobject. """
-    return tco.normpath == pco.normpath
+    return tco.cellpath_norm == pco.cellpath_norm
 
 def match_cell_type(tco, pco):
     """ Match the cell type (key or value) of the target cellobject (tco)
@@ -139,7 +139,7 @@ def match_data_type(tco, pco):
 def match_data(tco, pco):
     """ Match the actual cell data contents of the target cellobject (tco)
         against the profile cellobject (pco). """
-    return tco.data == pco.raw_data        
+    return tco.data == pco.data_raw
 
 ################################################################################
 class RegistryProcessing():
@@ -214,16 +214,16 @@ class RegistryProcessing():
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
                     # Normalize the cellpath path and append to CellObject
-                    pco.normpath = self.cell_path_normalizer.normalize_profile_co(pco.cellpath)
-                    rootkey = pco.normpath.split("\\")[0]
-                    pco.normpath = self.cell_path_normalizer.normalize_target_co(pco.normpath, rootkey)
+                    pco.cellpath_norm = self.cell_path_normalizer.normalize_profile_co(pco.cellpath)
+                    rootkey = pco.cellpath_norm.split("\\")[0]
+                    pco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(pco.cellpath_norm, rootkey)
                     
                     # Normalize the basename
-                    pco.normbasename = None
+                    pco.basename_norm = None
                     if pco.basename and pco.basename.startswith("C:"):
                         normbasename = self.file_path_normalizer.normalize(pco.basename)
                         normbasename = normbasename.replace('/', '\\')
-                        pco.normbasename = normbasename
+                        pco.basename_norm = normbasename
                     
                     # Append application name to CellObject
                     pco.app_name = apxml_obj.metadata.app_name
@@ -232,15 +232,15 @@ class RegistryProcessing():
                     # 1) PCO list
                     # 2) PCO dictionary
                     self.pcos.append(pco)
-                    self.pcos_dict[pco.normpath].append(pco)
+                    self.pcos_dict[pco.cellpath_norm].append(pco)
                     
                     if pco.name_type == "k":
-                        self.pcos_keys[pco.normpath].append(pco)
+                        self.pcos_keys[pco.cellpath_norm].append(pco)
                     elif pco.name_type == "v":
-                        self.pcos_values[pco.normpath].append(pco)
+                        self.pcos_values[pco.cellpath_norm].append(pco)
                     
                     # Get set of required hives based on profile entries
-                    #rootkey = pco.normpath.split("\\")[0]
+                    #rootkey = pco.cellpath_norm.split("\\")[0]
                     self.target_hives.add(rootkey)
                     pco.rootkey = rootkey
                     
@@ -249,8 +249,8 @@ class RegistryProcessing():
                     
                     # Log all profile entries (Application, State, Path)
                     logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name,
-                                                     pco.state,
-                                                     pco.normpath))
+                                                     pco.app_state,
+                                                     pco.cellpath_norm))
                                                      
         # Log all target hive names (rootkey)
         logging.info("\n>>> Target Registry hives:")
@@ -307,26 +307,26 @@ class RegistryProcessing():
         sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}".format(self.target_key_count, self.target_value_count));
             
         # Normalize the TCO rootkey
-        tco.normpath = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath, self.active_rootkey)
+        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath, self.active_rootkey)
         
         # Normlaize the TCO cell path (full path)
-        tco.normpath = self.cell_path_normalizer.normalize_target_co(tco.normpath, self.active_rootkey)
+        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm, self.active_rootkey)
         
         # Normalize the basename
-        tco.normbasename = None
+        tco.basename_norm = None
         if tco.basename and tco.basename.startswith("C:"):
             normbasename = self.file_path_normalizer.normalize(tco.basename)
             normbasename = normbasename.replace('/', '\\')
-            tco.normbasename = normbasename
+            tco.basename_norm = normbasename
         
         if tco.name_type == 'k':
-            if tco.normpath in self.pcos_keys:
-                for pco in self.pcos_keys[tco.normpath]:
+            if tco.cellpath_norm in self.pcos_keys:
+                for pco in self.pcos_keys[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
                 
         if tco.name_type == 'v':
-            if tco.normpath in self.pcos_values:
-                for pco in self.pcos_values[tco.normpath]:
+            if tco.cellpath_norm in self.pcos_values:
+                for pco in self.pcos_values[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
                
         # FROM HERE DOWN:
@@ -340,8 +340,8 @@ class RegistryProcessing():
         #            if pco.alloc == tco.alloc:
         #                self.match_tco_pco(tco, pco)
                       
-        #if tco.normpath in self.pcos_dict:
-        #    for pco in self.pcos_dict[tco.normpath]:
+        #if tco.cellpath_norm in self.pcos_dict:
+        #    for pco in self.pcos_dict[tco.cellpath_norm]:
         #        if pco.rootkey == tco.rootkey:
         #            self.match_tco_pco(tco, pco)
 
@@ -357,7 +357,7 @@ class RegistryProcessing():
         if tco.name_type == "k":
             if (match_cell_path(tco, pco) and 
                 match_cell_alloc(tco, pco)):
-                ##print("FOUND KEY: %s" % tco.normpath)
+                ##print("FOUND KEY: %s" % tco.cellpath_norm)
                 
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched"}
@@ -367,8 +367,8 @@ class RegistryProcessing():
                 logging.info("  > KEY: %s\t%s" % (tco.cellpath, 
                                                   tco.alloc))
                 logging.info("         %s\t%s\t%s\t%s" % (pco.app_name,
-                                                          pco.state,
-                                                          pco.normpath,
+                                                          pco.app_state,
+                                                          pco.cellpath_norm,
                                                           pco.alloc))
                 self.matches.append(tco)
                 return
@@ -381,7 +381,7 @@ class RegistryProcessing():
                 match_data_type(tco, pco) and
                 match_data(tco, pco) and 
                 match_cell_alloc(tco, pco)):
-                ##print("FOUND VALUE: %s" % tco.normpath)
+                ##print("FOUND VALUE: %s" % tco.cellpath_norm)
                 
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched"}
@@ -392,8 +392,8 @@ class RegistryProcessing():
                 logging.info("  > VALUE HARD: %s\t%s" % (tco.cellpath, 
                                                     tco.alloc))
                 logging.info("                %s\t%s\t%s\t%s" % (pco.app_name,
-                                                                 pco.state,
-                                                                 pco.normpath,
+                                                                 pco.app_state,
+                                                                 pco.cellpath_norm,
                                                                  pco.alloc))
                 self.matches.append(tco)
                 return
@@ -402,7 +402,7 @@ class RegistryProcessing():
             elif (match_cell_path(tco, pco) and
                   match_data_type(tco, pco) and
                   match_cell_alloc(tco, pco)):
-                ##print("FOUND SOFT VALUE: %s" % tco.normpath)
+                ##print("FOUND SOFT VALUE: %s" % tco.cellpath_norm)
                 
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched_soft"}
@@ -413,8 +413,8 @@ class RegistryProcessing():
                 logging.info("  > VALUE SOFT: %s\t%s" % (tco.cellpath, 
                                                          tco.alloc))
                 logging.info("                %s\t%s\t%s\t%s" % (pco.app_name,
-                                                                 pco.state,
-                                                                 pco.normpath,
+                                                                 pco.app_state,
+                                                                 pco.cellpath_norm,
                                                                  pco.alloc))
                 self.matches.append(tco)
                 return
@@ -424,8 +424,8 @@ class RegistryProcessing():
 
         # Log results overview
         logging.info("\n\n>>> Windows Registry Analysis Overview:")    
-        profile_states = [pco.state for pco in self.pcos]
-        target_states = [tco.original_cellobject.state for tco in self.matches]
+        profile_states = [pco.app_state for pco in self.pcos]
+        target_states = [tco.original_cellobject.app_state for tco in self.matches]
         for state in set(profile_states):
             logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
@@ -445,7 +445,7 @@ class RegistryProcessing():
             for tco in self.matches:
                 diffs = Objects.CellObject.compare_to_other(pco, 
                                                             tco.original_cellobject,
-                                                            ignore_vestigium = True)
+                                                            ignore_properties = {"cellpath, basename"})
                 if not diffs:
                     found.append(pco)
                     a_match = True
@@ -455,12 +455,12 @@ class RegistryProcessing():
         # Log found PCOs  
         logging.info("\n>>> Windows Registry Entries - Detected: %d" % len(found))
         for pco in found:
-            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, pco.state, pco.name_type, pco.normpath))
+            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, pco.app_state, pco.name_type, pco.cellpath_norm))
 
         # Log notfound PCOs
         logging.info("\n>>> Windows Registry Entries - NOT Detected: %d" % len(notfound))
         for pco in notfound:
-            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, pco.state, pco.name_type, pco.normpath))
+            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, pco.app_state, pco.name_type, pco.cellpath_norm))
 
 
     def results_overview(self):
@@ -468,8 +468,8 @@ class RegistryProcessing():
         
         # Print overview of results based on application state
         print("\n>>> Windows Registry Analysis Overview:")    
-        profile_states = [pco.state for pco in self.pcos]
-        target_states = [tco.original_cellobject.state for tco in self.matches]
+        profile_states = [pco.app_state for pco in self.pcos]
+        target_states = [tco.original_cellobject.app_state for tco in self.matches]
         print("    {0:<20s} {1:5s} {2:8s}".format("State",
                                                   "Profile",
                                                   "Target"))
@@ -501,21 +501,21 @@ class RegistryProcessing():
         print()
         
         # Print overview of results based on application state and hive file
-        ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.state == "install"]
-        ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.state == "install"]
-        ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.state == "install"]
+        ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
+        ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
+        ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "install"]
         
-        ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.state == "open"]
-        ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.state == "open"]
-        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.state == "open"]  
+        ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "open"]
+        ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "open"]
+        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]  
         
-        clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.state == "closed"]
-        clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.state == "closed"]
-        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.state == "closed"]     
+        clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "closed"]
+        clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "closed"]
+        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]     
         
-        uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.state == "uninstall"]
-        uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.state == "uninstall"]
-        uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.state == "uninstall"]                       
+        uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "uninstall"]
+        uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "uninstall"]
+        uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "uninstall"]                       
         
         print("    {0:<20s} {1:8s} {2:8s} {3:8s} {4:8s}".format("Hive", 
                                                    "Install", 

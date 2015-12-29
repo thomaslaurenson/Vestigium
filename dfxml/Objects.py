@@ -2820,7 +2820,7 @@ class CellObject(object):
         _append_object("mtime", self.mtime)
         _append_str("data_type", self.data_type)
         _append_str("data", self.data)
-        _append_str("data_raw", self.raw_data) # TL: Added data_raw to XML out
+        _append_str("data_raw", self.data_raw) # TL: Added data_raw to XML out
         _append_str("app_name", self.app_name) # TL: Added app_name to XML out
         _append_str("app_state", self.app_state) # TL: Added app_state to XML out
         
