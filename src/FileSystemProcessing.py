@@ -184,6 +184,7 @@ class FileSystemProcessing():
             for pfo in apxml_obj:
                 if isinstance(pfo, Objects.FileObject):
                     
+                    """
                     # Normalize the file path and append to FileObject
                     pfo.filename_norm = self.file_path_normalizer.normalize(pfo.filename)
                     
@@ -204,7 +205,7 @@ class FileSystemProcessing():
 
                     # Append application name to PFO
                     pfo.app_name = apxml_obj.metadata.app_name
-
+                    """
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary

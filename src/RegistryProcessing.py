@@ -213,6 +213,7 @@ class RegistryProcessing():
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
+                    """
                     # Normalize the cellpath path and append to CellObject
                     pco.cellpath_norm = self.cell_path_normalizer.normalize_profile_co(pco.cellpath)
                     rootkey = pco.cellpath_norm.split("\\")[0]
@@ -224,7 +225,7 @@ class RegistryProcessing():
                         normbasename = self.file_path_normalizer.normalize(pco.basename)
                         normbasename = normbasename.replace('/', '\\')
                         pco.basename_norm = normbasename
-                    
+                    """
                     # Append application name to CellObject
                     pco.app_name = apxml_obj.metadata.app_name
                     
@@ -240,7 +241,7 @@ class RegistryProcessing():
                         self.pcos_values[pco.cellpath_norm].append(pco)
                     
                     # Get set of required hives based on profile entries
-                    #rootkey = pco.cellpath_norm.split("\\")[0]
+                    rootkey = pco.cellpath_norm.split("\\")[0]
                     self.target_hives.add(rootkey)
                     pco.rootkey = rootkey
                     
