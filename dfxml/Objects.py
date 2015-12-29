@@ -2634,7 +2634,7 @@ class CellObject(object):
     def compare_to_original(self):
         self._diffs = self.compare_to_other(self.original_cellobject, True)
 
-    def compare_to_other(self, other, ignore_original=False):
+    def compare_to_other(self, other, ignore_original=False, ignore_vestigium=False):
         _typecheck(other, CellObject)
 
         diffs = set()
@@ -2651,8 +2651,9 @@ class CellObject(object):
             if oval != sval:
                 #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
                 # TL: Might need mdofication here for diff
-                #if propname == "cellpath":
-                #    continue
+                #if ignore_vestigium:
+                #    if propname == "cellpath" or propname == "basename":
+                #        continue
                 diffs.add(propname)
 
         return diffs

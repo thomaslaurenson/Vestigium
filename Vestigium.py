@@ -179,7 +179,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     logging.info("    Timestamp:        %s" % timestamp)
     logging.info("    Zap Output (dir): %s" % zapdir)
 
-    #"""
+    """
     ##############################
     # Perform file system analysis
     ##############################
@@ -196,7 +196,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.dfxml_report()
     fs.results()
     
-    #"""
+    """
     #quit()
     ###################################
     # Perform Windows Registry analysis
@@ -214,8 +214,11 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     reg.results()
     
     # Print overview of results
+    print("\n\n-----------------------")
+    print(">>> OVERVIEW OF RESULTS")
+    print("-----------------------")
     #fs.results_overview()
-    #reg.results_overview()
+    reg.results_overview()
 
     # All done, log Vestigium elapsed run time
     elapsed = timeit.default_timer() - base_start_time
