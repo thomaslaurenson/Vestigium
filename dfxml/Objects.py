@@ -1582,6 +1582,7 @@ class FileObject(object):
       "alloc_name",
       "annos",
       "app_name", # TL: Added app_name property
+      "app_state", # TL: Added app_state property
       "atime",
       "basename", # TL: Added basename property
       "bkup_time",
@@ -1590,11 +1591,11 @@ class FileObject(object):
       "crtime",
       "ctime",
       "data_brs",
-      "deleted_name", # TL: Added deleted_name property
       "dtime",
       "error",
       "externals",
       "filename",
+      "filename_norm", # TL: Added filename_norm property
       "filesize",
       "gid",
       "id",
@@ -1608,15 +1609,14 @@ class FileObject(object):
       "mtime",
       "name_brs",
       "name_type",
-      "normpath", # TL: Added normpath property
       "nlink",
       "original_fileobject",
       "orphan",
+      "orphan_name", # TL: Added orphan_name property      
       "parent_object",
       "partition",
       "seq",
       "sha1",
-      "state", # TL: Added state property
       "uid",
       "unalloc",
       "unused",
@@ -1645,7 +1645,7 @@ class FileObject(object):
       "changed":"delta:changed_file",
       "modified":"delta:modified_file",
       "matched":"delta:matched",
-      "matched_soft":"delta:matched_soft"
+      "matched_soft":"delta:matched_soft" # TL: Added soft match delta
     }
 
     def __init__(self, *args, **kwargs):
@@ -1692,7 +1692,7 @@ class FileObject(object):
     def compare_to_original(self):
         self._diffs = self.compare_to_other(self.original_fileobject, True)
 
-    def compare_to_other(self, other, ignore_original=False):
+    def compare_to_other(self, other, ignore_original=False, ignore_properties=set()):
         _typecheck(other, FileObject)
 
         diffs = set()
@@ -1702,6 +1702,11 @@ class FileObject(object):
                 continue
             if ignore_original and propname == "original_fileobject":
                 continue
+            # TL: Added ignore_properties check
+            # Can pass a set() of properties to ignore
+            # e.g., {"filename", "sha1"}
+            if propname in ignore_properties:
+                continue                     
             oval = getattr(other, propname)
             sval = getattr(self, propname)
             if oval is None and sval is None:
@@ -2028,9 +2033,8 @@ class FileObject(object):
             _append_object("parent_object", parent_object_shadow)
 
         _append_str("filename", self.filename)
-        _append_str("basename", self.basename) # TL: Added basename element to XML out
-        _append_str("normpath", self.normpath) # TL: Added normpath element to XML out        
-        _append_str("deleted_name", self.deleted_name) # TL: Added deleted_name element to XML out 
+        _append_str("filename_norm", self.filename_norm) # TL: Added filename_norm to XML out                
+        _append_str("basename", self.basename) # TL: Added basename to XML out
         _append_str("error", self.error)
         _append_str("partition", self.partition)
         _append_str("id", self.id)
@@ -2044,6 +2048,7 @@ class FileObject(object):
             _append_bool("alloc_name", self.alloc_name)
         _append_bool("used", self.used)
         _append_bool("orphan", self.orphan)
+        _append_str("orphan_name", self.orphan_name) # TL: Added orphan_name to XML out         
         _append_bool("compressed", self.compressed)
         _append_str("inode", self.inode)
         _append_str("meta_type", self.meta_type)
@@ -2068,8 +2073,8 @@ class FileObject(object):
         _append_hash("sha1", self.sha1)
         _append_object("original_fileobject", self.original_fileobject, "delta:")
         # TL: Added the following object to print XML elements
-        _append_str("app_name", self.app_name) # TL: Added app_name element to XML out
-        _append_str("state", self.state) # TL: Added state element to XML out
+        _append_str("app_name", self.app_name) # TL: Added app_name to XML out
+        _append_str("app_state", self.state) # TL: Added app_state to XML out
 
         if len(diffs_whittle_set) > 0:
             _logger.warning("Did not annotate all of the differing properties of this file.  Remaining properties:  %r." % diffs_whittle_set)
@@ -2132,7 +2137,17 @@ class FileObject(object):
     # TL: Added app_name property setter
     @app_name.setter
     def app_name(self, val):
-        self._app_name = _strcast(val)        
+        self._app_name = _strcast(val)   
+        
+    # TL: Added app_state property getter
+    @property
+    def app_state(self):
+        return self._app_state
+
+    # TL: Added app_state property setter
+    @app_state.setter
+    def app_state(self, val):
+        self._app_state = _strcast(val)                
 
     @property
     def atime(self):
@@ -2228,16 +2243,6 @@ class FileObject(object):
             _typecheck(val, ByteRuns)
         self._data_brs = val
 
-    # TL: Added deleted_name property getter
-    @property
-    def deleted_name(self):
-        return self._deleted_name
-
-    # TL: Added deleted_name property setter
-    @deleted_name.setter
-    def deleted_name(self, val):
-        self._deleted_name = _strcast(val) 
-
     @property
     def diffs(self):
         """This property intentionally has no setter.  To populate, call compare_to_original() after assigning an original_fileobject."""
@@ -2272,6 +2277,17 @@ class FileObject(object):
     @filename.setter
     def filename(self, val):
         self._filename = _strcast(val)
+        
+    # TL: Added filename_norm property getter
+    @property
+    def filename_norm(self):
+        return self._filename_norm
+
+    # TL: Added filename_norm property setter
+    @filename_norm.setter
+    def filename_norm(self, val):
+        self._filename_norm = _strcast(val)         
+        
     @property
     def externals(self):
         """
@@ -2400,16 +2416,6 @@ class FileObject(object):
                 raise ValueError("Unexpected name_type received: %r (casted to %r)." % (val, cast_val))
             self._name_type = cast_val
 
-    # TL: Added normpath property getter
-    @property
-    def normpath(self):
-        return self._normpath
-
-    # TL: Added normpath property setter
-    @normpath.setter
-    def normpath(self, val):
-        self._normpath = _strcast(val) 
-
     @property
     def nlink(self):
         return self._nlink
@@ -2425,6 +2431,16 @@ class FileObject(object):
     @orphan.setter
     def orphan(self, val):
         self._orphan = _boolcast(val)
+        
+    # TL: Added orphan_name property getter
+    @property
+    def orphan_name(self):
+        return self._orphan_name
+
+    # TL: Added orphan_name property setter
+    @orphan_name.setter
+    def orphan_name(self, val):
+        self._orphan_name = _strcast(val)         
 
     @property
     def original_fileobject(self):
@@ -2470,16 +2486,6 @@ class FileObject(object):
     @sha1.setter
     def sha1(self, val):
         self._sha1 = _strcast(val)
-
-    # TL: Added state property getter
-    @property
-    def state(self):
-        return self._state
-
-    # TL: Added state property setter
-    @state.setter
-    def state(self, val):
-        self._state = _strcast(val) 
 
     @property
     def uid(self):
