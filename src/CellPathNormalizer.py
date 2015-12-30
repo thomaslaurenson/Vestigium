@@ -58,9 +58,9 @@ class CellPathNormalizer():
             normpath = normpath[5:]
         if normpath.startswith("HKU\\"):
             normpath = normpath[4:]
-            normpath = normpath.split("\\")
-            normpath[0] = "%SID%"
-            normpath = "\\".join(normpath)
+            #normpath = normpath.split("\\")
+            #normpath[0] = "%SID%"
+            #normpath = "\\".join(normpath)
             normpath = "NTUSER.DAT\\" + normpath
         return normpath
 
@@ -83,9 +83,9 @@ class CellPathNormalizer():
         else:
             return cellpath
         
-        if rootkey == "NTUSER.DAT":
-            if len(normpath) >= 2:
-                normpath[1] = "%SID%"
+        #if rootkey == "NTUSER.DAT":
+        #    if len(normpath) >= 2:
+        #        normpath[1] = "%SID%"
         
         # Normalise SYSTEM Registry hive cellpath
         if rootkey == "SYSTEM":
