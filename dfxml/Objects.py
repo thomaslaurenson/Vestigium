@@ -2746,6 +2746,9 @@ class CellObject(object):
             # TL: Added app_state to be populated
             elif ctn == "app_state":
                 self.app_state = ce.text
+            # TL: Added app_name to be populated
+            elif ctn == "app_name":
+                self.app_name = ce.text                
             # TL: Added rootkey to be populated
             elif ctn == "rootkey":
                 self.rootkey = ce.text                                 

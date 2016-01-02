@@ -4,12 +4,11 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/08/24
+Date:    2016/01/03
 
 Description:
-The apxml.py Python module is an Application Prog
-parses an Application Profile XML (APXML file);
-for example, TrueCrypt-7.1a-6.1.7601.apxml.
+The apxml.py Python module is an Application Programming Interface (API)
+for the standardised APXML document. 
 
 Copyright (c) 2015, Thomas Laurenson
 
@@ -31,12 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 >>> CHANGELOG:
     0.1.0       Base functionality ()
 
->>> TODO:
-
->>> NOTES:
-    Added "REG_DWORD_LITTLE_ENDIAN" to Objects.py (line 2856)
-    Added "REG_QWORD_LITTLE_ENDIAN" to Objects.py (line 
-
 """
 
 __version__ = '0.1.0'
@@ -48,25 +41,25 @@ import collections
 import xml.etree.ElementTree as ET
 
 try:
-    import Objects
+    import dfxml
 except ImportError:
-    print("Error: The Objects.py module is required to run this script")
+    print("Error: apxml.py")
+    print("       The dfxml.py module is required to run this script")
     print("       You can download from: https://github.com/simsong/dfxml")
     print("       Now Exiting...")
     sys.exit(1)
 
-##try:
-##    import FixInvalidXMLTokens
-##except ImportError:
-##    print("Error: The FixInvalidXMLTokens.py module is required to run this script")
-##    print("       You can download from: INSERT URL HERE")
-##    print("       Now Exiting...")
-##    sys.exit(1)    
+try:
+    import Objects
+except ImportError:
+    print("Error: apxml.py")
+    print("       The Objects.py module is required to run this script")
+    print("       You can download from: https://github.com/thomaslaurenson/apxml")
+    print("       Now Exiting...")
+    sys.exit(1)
 
 if sys.version_info <= (3,0):
     raise RuntimeError("apxml.py requires Python 3.0 or above")
-
-_all_phases = list()
 
 ################################################################################
 # Helper methods
@@ -159,8 +152,7 @@ class APXMLObject(object):
         # Statistics object to store APXML file stats
         self.stats = StatisticsObject()
 
-    _all_properties = set(["fileobject",
-                           "cellobject"])
+        self._all_states = collections.OrderedDict()
 
     def __iter__(self):
         """ Yields all FileObjects and CellObjects attached to this APXMLObject. """
@@ -170,6 +162,7 @@ class APXMLObject(object):
             yield r
 
     def add_namespace(self, prefix, url):
+        """ Add XML namespace to APXMLObject. """
         self._namespaces[prefix] = url
         ET.register_namespace(prefix, url)
 
@@ -179,6 +172,7 @@ class APXMLObject(object):
             yield (prefix, self._namespaces[prefix])        
 
     def append(self, value):
+        """ Append FileObject or CellObject to APXMLObject. """
         if isinstance(value, Objects.FileObject):
             self._files.append(value)
         elif isinstance(value, Objects.CellObject):
@@ -187,6 +181,7 @@ class APXMLObject(object):
             raise TypeError("Type Error: %r." % type(value))
 
     def to_Element(self):
+        """ Convert an APXMLObject to ElementTree Object. """
         outel = ET.Element("apxml")
 
         # Set APXML version
@@ -208,19 +203,14 @@ class APXMLObject(object):
         tmpel0 = self.creator.to_Element()
         outel.append(tmpel0)
 
-        # Append life cycle phases?!
-        # Append FileObjects
-        # Append CellObjects
-        tmpel0 = self.objs_to_Element("install")
-        tmpel1 = self.objs_to_Element("open")
-        tmpel2 = self.objs_to_Element("close")
-        tmpel3 = self.objs_to_Element("uninstall")
-        tmpel4 = self.objs_to_Element("reboot")
-        outel.append(tmpel0)
-        outel.append(tmpel1)
-        outel.append(tmpel2)
-        outel.append(tmpel3)
-        outel.append(tmpel4)
+        # Write FileObjects and CellObjects to APXML document
+        for state in self._all_states:
+            for fi in self._files:
+                if fi.app_state == state:
+                    outel.append(fi.to_Element())
+            for cell in self._cells:
+                if cell.app_state == state:
+                    outel.append(cell.to_Element()) 
 
         # Set Rusage element
         tmpel0 = self.rusage.to_Element()
@@ -229,39 +219,9 @@ class APXMLObject(object):
         return outel
 
     def to_apxml(self):
+        """ Write an APXMLObject to XML. """
         return _ET_tostring(self.to_Element())
-
-    def objs_to_Element(self, phase):
-        outel = ET.Element(phase)
-        for fi in self._files:
-            if fi.app_state == phase:
-                outel.append(fi.to_Element())
-        for cell in self._cells:
-            if cell.app_state == phase:
-                outel.append(cell.to_Element())                
-        return outel
-
-    def populate_from_Element(self, e, app_state):
-        """ Populate FileObjects and CellObjects from an APXML child element. """
-        _typecheck(e, (ET.Element, ET.ElementTree))
-        (ns, tn) = _qsplit(e.tag)
-        # Add the APXML child tag to a set of _all_phases
-        #_all_phases.append(tn)
-        #assert tn in _all_phases
-        for ce in e.findall("./*"):
-            (cns, ctn) = _qsplit(ce.tag)
-            if ctn in self._all_properties:
-                if ctn == "fileobject":
-                    fi = Objects.FileObject()
-                    fi.populate_from_Element(ce)
-                    fi.app_state = app_state
-                    self._files.append(fi)
-                elif ctn == "cellobject":
-                    cell = Objects.CellObject()
-                    cell.populate_from_Element(ce)
-                    cell.app_state = app_state
-                    self._cells.append(cell)
-
+    
     # version setter and getter
     @property
     def version(self):
@@ -416,7 +376,7 @@ class CreatorObject(object):
 
 
 ################################################################################
-# Creator Object to store DFXML creator element information
+# Execution Environment Object to store execution information
 class ExecutionEnvironmentObject(object):
     def __init__(self, *args, **kwargs):
         self.windows_version = kwargs.get("windows_version")
@@ -528,42 +488,20 @@ class RusageObject(object):
         self._end_date = _datecast(value)
 
 ################################################################################
-# Rusage Object to store DFXML metadata element information
+# Statistics Object to store DFXML metadata element information
 class StatisticsObject(object):
-    def __init__(self, *args, **kwargs):
-        self.cALL = 0       # Total APXML entries
-        self.cFS = 0        # File system entry count
-        self.cFSFiles = 0   # File system: FILE count
-        self.cFSDirs = 0    # File system: DIR count
-        self.cREG = 0       # Registry entry count
-        self.cREGKeys = 0   # Registry: KEY count
-        self.cREGValues = 0 # Registry: VALUE count
+    def __init__(self, *args, **kwargs):       
+        self.all = 0        # Total APXML entries
+        self.dirs = 0       # Directory count
+        self.files = 0      # File count
+        self.keys = 0       # Key count
+        self.values = 0     # Value count
 
-        self.cFSFilesState = collections.defaultdict(int)
-        self.cFSFilesDelta = collections.defaultdict(int)
-        self.cFSFilesStateDelta = collections.OrderedDict()
-        for state in _all_phases:
-            self.cFSFilesStateDelta[state] = []
-
-        self.cFSDirsState = collections.defaultdict(int)
-        self.cFSDirsDelta = collections.defaultdict(int)
-        self.cFSDirsStateDelta = collections.OrderedDict()
-        for state in _all_phases:
-            self.cFSDirsStateDelta[state] = []
-            
-        self.cREGKeysState = collections.defaultdict(int)
-        self.cREGKeysDelta = collections.defaultdict(int)
-        self.cREGKeysStateDelta = collections.OrderedDict()
-        for state in _all_phases:
-            self.cREGKeysStateDelta[state] = []
-
-
-        self.cREGValuesState = collections.defaultdict(int)
-        self.cREGValuesDelta = collections.defaultdict(int)
-        self.cREGValuesStateDelta = collections.OrderedDict()
-        for state in _all_phases:
-            self.cREGValuesStateDelta[state] = []
-
+        self._dirs = collections.OrderedDict()
+        self._files = collections.OrderedDict()
+        self._keys = collections.OrderedDict()
+        self._values = collections.OrderedDict()      
+        
 ################################################################################
 def generate_stats(apxml_obj):
     """ Generate statistics from an APXMLObject. """
@@ -574,93 +512,57 @@ def generate_stats(apxml_obj):
         
     # Create an object to hold stats information
     apxml_obj.stats = StatisticsObject()
+    
+    for state in apxml_obj._all_states:
+        apxml_obj.stats._dirs[state] = []
+        apxml_obj.stats._files[state] = []
+        apxml_obj.stats._keys[state] = []
+        apxml_obj.stats._values[state] = [] 
 
     # Iterate over each FileObject and CellObject and collect stats
     for obj in apxml_obj:
-        apxml_obj.stats.cALL += 1
+        apxml_obj.stats.all += 1
         if isinstance(obj, Objects.FileObject):
-            apxml_obj.stats.cFS += 1
+
             # Process file system file entry
             if obj.meta_type == 1:
-                apxml_obj.stats.cFSFiles += 1
-                apxml_obj.stats.cFSFilesState[obj.app_state] += 1
+                apxml_obj.stats.files += 1
                 for delta in obj.annos:
-                    apxml_obj.stats.cFSFilesDelta[delta] += 1
-                    apxml_obj.stats.cFSFilesStateDelta[obj.app_state].append(delta)
+                    apxml_obj.stats._files[obj.app_state].append(delta)
+
             # Process file system directory
             elif obj.meta_type == 2:
-                apxml_obj.stats.cFSDirs += 1
-                apxml_obj.stats.cFSDirsState[obj.app_state] += 1
+                apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
-                    apxml_obj.stats.cFSDirsDelta[delta] += 1
-                    apxml_obj.stats.cFSDirsStateDelta[obj.app_state].append(delta)
+                    apxml_obj.stats._dirs[obj.app_state].append(delta)
 
         if isinstance(obj, Objects.CellObject):
-            apxml_obj.stats.cREG += 1
             # Process Registry key
             if obj.name_type == "k": 
-                apxml_obj.stats.cREGKeys += 1
-                apxml_obj.stats.cREGKeysState[obj.app_state] += 1
+                apxml_obj.stats.keys += 1
+                apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
-                    apxml_obj.stats.cREGKeysDelta[delta] += 1
-                    apxml_obj.stats.cREGKeysStateDelta[obj.app_state].append(delta)
+                    apxml_obj.stats._keys[obj.app_state].append(delta)
+                                    
             # Process Registry value
             elif obj.name_type == "v":
-                apxml_obj.stats.cREGValues += 1
-                apxml_obj.stats.cREGValuesState[obj.app_state] += 1
+                apxml_obj.stats.values += 1
+                apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
-                    apxml_obj.stats.cREGValuesDelta[delta] += 1
-                    apxml_obj.stats.cREGValuesStateDelta[obj.app_state].append(delta)
+                    apxml_obj.stats._values[obj.app_state].append(delta)                
+
         
 ################################################################################
 def iterparse(filename, events=("start", "end"), **kwargs):
     """ Generator. Parses an APXML document to an APXMLObject. """
     
-    # APXML default XML tags
-    _default_tags = ["apxml",
-                     "metadata",
-                     "type",
-                     "publisher",
-                     "app_name",
-                     "app_version",
-                     "app_state",
-                     "program",
-                     "version",
-                     "windows_version",
-                     "command_line",
-                     "start_date",
-                     "execution_environment",
-                     "end_date",
-                     "creator",
-                     "fileobject",
-                     "filename",
-                     "filename_norm",
-                     "filesize",
-                     "meta_type",
-                     "alloc_name",
-                     "alloc_inode",
-                     "hashdigest",
-                     "cellobject",
-                     "cellpath",
-                     "cellpath_norm",
-                     "basename",
-                     "basename_norm",
-                     "name_type",
-                     "data_type",
-                     "data_raw",
-                     "data",
-                     "alloc",
-                     "rusage"]
-
-    # Check file input
-    #fh = open(filename, "rb")          
+    # Open file handle to APXML doucment       
     fh = open(filename, encoding='utf-16-le', errors='replace')
-    #for line in fh:
-    #    line = line.strip()
-    #    print(line)
+
+    # Create APXMLObject to store all profile information
     apxml = APXMLObject()
     
-    # Call ElementTree iterparse on APXML
+    # Call ElementTree iterparse on APXML document
     for (ETevent, elem) in ET.iterparse(fh, events=("start-ns", "start", "end")):
 
         #Track namespaces
@@ -673,23 +575,34 @@ def iterparse(filename, events=("start", "end"), **kwargs):
         (ns, ln) = _qsplit(elem.tag)
         
         # Process each XML tag
-        if ETevent == "start":
+        if ETevent == "start":  
             if ln == "metadata":
                 metadata = MetadataObject()
                 metadata.populate_from_Element(elem)
                 apxml.metadata = metadata
+            
             elif ln == "creator":
                 creator = CreatorObject()
                 creator.populate_from_Element(elem)
                 apxml.creator = creator
+            
             elif ln == "rusage":
                 rusage = RusageObject()
                 rusage.populate_from_Element(elem)
                 apxml.rusage = rusage
+        
         elif ETevent == "end":
-            if ln not in _default_tags:
-                _all_phases.append(ln)
-                apxml.populate_from_Element(elem, ln)
+            if ln == "fileobject":
+                fo = Objects.FileObject()
+                fo.populate_from_Element(elem)
+                apxml.append(fo)
+                apxml._all_states[fo.app_state] = None
+                    
+            elif ln == "cellobject":
+                co = Objects.CellObject()
+                co.populate_from_Element(elem)
+                apxml.append(co)
+                apxml._all_states[co.app_state] = None  
 
     # All done, return the APXMLObject
     return apxml
