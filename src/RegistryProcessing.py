@@ -201,8 +201,26 @@ class RegistryProcessing():
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
-                    # Append application name to CellObject
-                    pco.app_name = apxml_obj.metadata.app_name
+                    # Normalise the CellObject properties
+                    # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
+                    # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
+                    
+                    """
+                    obj.cellpath_norm = cell_path_normalizer.normalize_profile_co(obj.cellpath)
+                    rootkey = obj.cellpath_norm.split("\\")[0]
+                    obj.cellpath_norm = cell_path_normalizer.normalize_target_co(obj.cellpath_norm, rootkey)
+                            
+                    # Normalize the basename
+                    obj.basename_norm = None
+                    if obj.basename and obj.basename.startswith("C:"):
+                        normbasename = file_path_normalizer.normalize(obj.basename)
+                        normbasename = normbasename.replace('/', '\\')
+                        obj.basename_norm = normbasename
+                        obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
+                        
+                    # Set the application name
+                    obj.app_name = apxml_obj.metadata.app_name 
+                    """
                     
                     # Add Profile CellObject (PCO) to:
                     # 1) PCO list
@@ -297,8 +315,9 @@ class RegistryProcessing():
             normbasename = self.file_path_normalizer.normalize(tco.basename)
             normbasename = normbasename.replace('/', '\\')
             tco.basename_norm = normbasename
-            tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename, 
-                                                          tco.basename_norm)
+            if tco.cellpath_norm:
+                tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename, 
+                                                              tco.basename_norm)
         
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
@@ -450,6 +469,7 @@ class RegistryProcessing():
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
         total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)            
         
+        logging.info("\n>>> Windows Registry Analysis Overview:")
         logging.info("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive", 
                                                    "Install", 
                                                    "Open",
@@ -502,6 +522,7 @@ class RegistryProcessing():
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
         total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)            
         
+        print("\n>>> Windows Registry Analysis Overview:")
         print("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive", 
                                                    "Install", 
                                                    "Open",
