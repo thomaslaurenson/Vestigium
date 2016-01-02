@@ -183,29 +183,35 @@ class FileSystemProcessing():
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
                 if isinstance(pfo, Objects.FileObject):
+                    # Normalise the FileObject properties
+                    # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
+                    # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
                     
                     """
-                    # Normalize the file path and append to FileObject
-                    pfo.filename_norm = self.file_path_normalizer.normalize(pfo.filename)
-                    
                     # Add basename to FileObject
-                    if pfo.meta_type == 1:
-                        split = pfo.filename.split("\\")
-                        pfo.basename = split[len(split) - 1]
+                    basename = obj.filename.split("\\")
+                    obj.basename = basename[len(basename) - 1]
                     
-                    # If the PFO is unallocated, add a orphan_name element
-                    # This is to adhere to deleted file naming conventions in TSK
-                    if not pfo.is_allocated() and pfo.meta_type == 1:
-                        split = pfo.filename.split("\\")
-                        pfo.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
+                    # Normalize the file path and append to FileObject
+                    obj.filename_norm = file_path_normalizer.normalize(obj.filename) 
                     
-                    # Fix case sensitivity for SHA1
-                    if pfo.sha1 is not None:
-                        pfo.sha1 = pfo.sha1.lower()
+                    # Use filename_norm to extract basename_norm
+                    basename_norm = obj.filename_norm.split("/")
+                    obj.basename_norm = basename_norm[len(basename_norm) - 1]
 
-                    # Append application name to PFO
-                    pfo.app_name = apxml_obj.metadata.app_name
+                    # LiveDiff stores SHA-1 hashes in uppercase, convert to lower
+                    if obj.sha1 is not None:
+                        obj.sha1 = obj.sha1.lower()
+                        
+                    # Set the application name
+                    obj.app_name = apxml_obj.metadata.app_name     
+                    
+                    # Add a orphan_name to only unallocated files
+                    if not obj.is_allocated() and obj.meta_type == 1:
+                        split = obj.filename.split("\\")
+                        obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]  
                     """
+                    
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary
