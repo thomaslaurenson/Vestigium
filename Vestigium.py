@@ -217,7 +217,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     print("\n\n-----------------------")
     print(">>> OVERVIEW OF RESULTS")
     print("-----------------------")
-    #fs.results_overview()
+    fs.results_overview()
     reg.results_overview()
 
     # All done, log Vestigium elapsed run time

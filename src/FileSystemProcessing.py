@@ -47,17 +47,17 @@ except ImportError:
     print('Error: FileSystemProcessing.py')
     print('       The FilePathNormalizer.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/Vestigium')
-    print('       Now Exiting...') 
+    print('       Now Exiting...')
     sys.exit(1)
-    
+
 try:
     import Objects
 except ImportError:
     print('Error: FileSystemProcessing.py')
     print('       The Objects.py module is required.')
     print('       You can download from: https://github.com/simsong/dfxml')
-    print('       Now Exiting...')   
-    sys.exit(1) 
+    print('       Now Exiting...')
+    sys.exit(1)
 
 try:
     import dfxml
@@ -65,7 +65,7 @@ except ImportError:
     print('Error: FileSystemProcessing.py')
     print('       The dfxml.py module is required.')
     print('       You can download from: https://github.com/simsong/dfxml')
-    print('       Now Exiting...')   
+    print('       Now Exiting...')
     sys.exit(1)
 
 try:
@@ -74,8 +74,8 @@ except ImportError:
     print('Error: FileSystemProcessing.py')
     print('       The apxml.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/apxml')
-    print('       Now Exiting...') 
-    sys.exit(1)    
+    print('       Now Exiting...')
+    sys.exit(1)
 
 ################################################################################
 # Helper methods
@@ -86,7 +86,7 @@ def sha1_file(fi):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
-    
+
 def ptime(self, t):
     """ Return the requested time format. 't' is a dfxml time value. """
     if t is None:
@@ -94,7 +94,7 @@ def ptime(self, t):
     if self.timestamp:
         return str(t.timestamp())
     else:
-        return str(t.iso8601())    
+        return str(t.iso8601())
 
 def match_filename_norm(tfo, pfo):
     """ Compare fullpath of target fileobejct to profile filobject. """
@@ -120,7 +120,7 @@ def match_allocation(tfo, pfo):
 class FileSystemProcessing():
     def __init__(self, imagefile=None, xmlfile=None, outputdir=None, profiles=None, ignore_dotdirs=False, timestamp=False):
         """ Initialise FileSystemProcessing object. """
-        
+
         # Global variables
         self.imagefile = imagefile
         self.xmlfile = xmlfile
@@ -135,7 +135,7 @@ class FileSystemProcessing():
         print("-----------------------------------")
         logging.info("\n-----------------------------------")
         logging.info(">>> PERFORMING FILE SYSTEM ANALYSIS")
-        logging.info("-----------------------------------")        
+        logging.info("-----------------------------------")
 
         # List of Profile FileObjects (PFOs)
         self.pfos = list()
@@ -143,11 +143,11 @@ class FileSystemProcessing():
         # Dictionary to store Profile FileObjects (PFOs)
         # self.pfos = { fullpath : [FileObject1, FileObject2 ... }
         self.pfos_dict = collections.defaultdict(list)
-        
+
         # Set to store known file paths
         # self.pfos_filenames = { filename1, filename2 ...}
         self.pfos_filenames = set()
-        
+
         # Dictionary to store SHA-1 hashes
         # self.pfos_hashes = { sha1 : [FileObject1, FileObject2 ... }
         self.pfos_hashes = collections.defaultdict(list)
@@ -155,23 +155,23 @@ class FileSystemProcessing():
         # Store the Target Data Set in a DFXML object
         self.tds_dfxml = Objects.DFXMLObject()
 
-        # Store the Profile FileObjects in a DFXML object        
+        # Store the Profile FileObjects in a DFXML object
         self.pfo_dfxml = Objects.DFXMLObject()
 
         # Initialize the file path normalizer object
         self.file_path_normalizer = FilePathNormalizer.FilePathNormalizer()
-        
+
         # Create a list for FileObjects matches
         self.matches = list()
-        
+
         # Counter for target FileObjects to display progress
         self.target_file_count = 0
         self.target_dir_count = 0
 
-    
+
     def process_apxmls(self):
         """ Process Application Profiles (APXML documents). """
-        
+
         # Print heaser
         print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
@@ -186,15 +186,15 @@ class FileSystemProcessing():
                     # Normalise the FileObject properties
                     # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
                     # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
-                    
+
                     """
                     # Add basename to FileObject
                     basename = obj.filename.split("\\")
                     obj.basename = basename[len(basename) - 1]
-                    
+
                     # Normalize the file path and append to FileObject
-                    obj.filename_norm = file_path_normalizer.normalize(obj.filename) 
-                    
+                    obj.filename_norm = file_path_normalizer.normalize(obj.filename)
+
                     # Use filename_norm to extract basename_norm
                     basename_norm = obj.filename_norm.split("/")
                     obj.basename_norm = basename_norm[len(basename_norm) - 1]
@@ -202,16 +202,16 @@ class FileSystemProcessing():
                     # LiveDiff stores SHA-1 hashes in uppercase, convert to lower
                     if obj.sha1 is not None:
                         obj.sha1 = obj.sha1.lower()
-                        
+
                     # Set the application name
-                    obj.app_name = apxml_obj.metadata.app_name     
-                    
+                    obj.app_name = apxml_obj.metadata.app_name
+
                     # Add a orphan_name to only unallocated files
                     if not obj.is_allocated() and obj.meta_type == 1:
                         split = obj.filename.split("\\")
-                        obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]  
+                        obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
                     """
-                    
+
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary
@@ -224,18 +224,18 @@ class FileSystemProcessing():
                     if pfo.meta_type == 1 and pfo.sha1 is not None:
                         self.pfos_hashes[pfo.sha1].append(pfo)
                     self.pfo_dfxml.append(pfo)
-                    
+
                     # Log all profile entries (Application, State, Path)
                     logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name, pfo.app_state, pfo.filename_norm))
 
-    
+
     def process_target(self):
         """ Parse the file system of the target data set. """
-        
+
         # Print header
         print("\n>>> Processing target data set ...")
         logging.info("\n>>> DETECTED FILE SYSTEM ARTIFACTS:")
-        
+
         # Process the target data set
         if self.xmlfile is not None:
             # If DFXML from fiwalk, parse using Objects.iterparse
@@ -250,7 +250,7 @@ class FileSystemProcessing():
                     self.tds_dfxml.append(tfo)
                     # Process the individual FileObject against target
                     self.process_target_fi(obj)
-            
+
             #### Save DFXML file: Format using minidom then write to file
             temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
             xml_fi = xml.dom.minidom.parse(temp_fi)
@@ -260,17 +260,17 @@ class FileSystemProcessing():
             with open(fn, "w", encoding="utf-8") as f:
                 f.write(dfxml_report)
 
-    
+
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
-        
+
         # File system count progress indicator
         if tfo.meta_type == 2:
             self.target_dir_count += 1
         elif tfo.meta_type == 1:
-            self.target_file_count += 1        
+            self.target_file_count += 1
         sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}".format(self.target_dir_count, self.target_file_count));
-             
+
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
             return
@@ -283,15 +283,15 @@ class FileSystemProcessing():
 
         # Normalize the TFO full path/filename
         tfo.filename_norm = self.file_path_normalizer.normalize(tfo.filename)
-        
+
         # Add basename to TFO FileObject
         split = tfo.filename.split("/")
-        tfo.basename = split[len(split) - 1]  
+        tfo.basename = split[len(split) - 1]
 
         #### Start file system matching
-        # 1) First check: Match directories and data files  
+        # 1) First check: Match directories and data files
         if tfo.filename_norm in self.pfos_dict:
-            
+
             # Match file system directories
             if tfo.meta_type == 2:
                 for pfo in self.pfos_dict[tfo.filename_norm]:
@@ -302,7 +302,7 @@ class FileSystemProcessing():
                         logging.info("  > DIRECTORY: %s\t%s" % (tfo.filename, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
-            
+
             # Match file system data files
             elif tfo.meta_type == 1:
                 for pfo in self.pfos_dict[tfo.filename_norm]:
@@ -355,9 +355,9 @@ class FileSystemProcessing():
         """ Match a directory artifact. """
         return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
 
-    
+
     def match_file(self, tfo, pfo):
-        """ Match a data file artifact. """          
+        """ Match a data file artifact. """
         if (match_filename_norm(tfo, pfo) and
             match_hash(tfo,pfo) and
             match_size(tfo, pfo) and
@@ -367,12 +367,12 @@ class FileSystemProcessing():
               match_allocation(tfo, pfo)):
             return 1
         else:
-            return 0                                                           
-        
-    
+            return 0
+
+
     def results(self):
         """ Print overview of results to log file. """
-        
+
         # Log results overview
         logging.info("\n>>> File System Analysis Overview:")
         profile_states = [pfo.app_state for pfo in self.pfos]
@@ -380,14 +380,14 @@ class FileSystemProcessing():
         for state in set(profile_states):
             logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
-                                                       target_states.count(state)))        
-        
+                                                       target_states.count(state)))
+
         # Provide more detailed results, log a list of:
         # 1) Detected results (app, state, path)
-        # 2) Not Detected results (app, state, path)        
+        # 2) Not Detected results (app, state, path)
         found = list()
         notfound = list()
-        
+
         # Compare all PFOs against matched PFOs
         # Get a list of found PFOs
         # Get a list of notfound PFOs
@@ -400,8 +400,8 @@ class FileSystemProcessing():
                     a_match = True
             if not a_match:
                 notfound.append(pfo)
-                  
-        # Log found PFOs  
+
+        # Log found PFOs
         logging.info("\n>>> File System Entries - Detected: %d" % len(found))
         for pfo in found:
             logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
@@ -410,8 +410,8 @@ class FileSystemProcessing():
         logging.info("\n>>> File System Entries - NOT Detected: %d" % len(notfound))
         for pfo in notfound:
             logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
-            
-    
+
+
     def results_overview(self):
         """ Print overview of results to console. """
         print("\n>>> File System Analysis Overview:")
@@ -420,12 +420,12 @@ class FileSystemProcessing():
         for state in set(profile_states):
             print("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
-                                                       target_states.count(state)))               
+                                                       target_states.count(state)))
 
-    
+
     def dfxml_report(self):
         """ Generate a DFXML report of matches. """
-        
+
         # Outline Dublin Core metadata to include
         dc = {"name" : os.path.basename(__file__),
               "type" : "Vestigium Report",
@@ -436,16 +436,16 @@ class FileSystemProcessing():
               "os_version" : platform.version(),
               "os_host" : platform.node(),
               "os_arch" : platform.machine()}
-        
+
         # Create a DFXML object to append matched files
         dfxml = Objects.DFXMLObject(command_line = " ".join(sys.argv),
                                     sources = [self.imagefile, self.xmlfile],
                                     dc = dc)
-        
+
         # Add XML Name Space for "delta" attribute
         XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
         dfxml.add_namespace("delta", XMLNS_DELTA)
-        
+
         # Add matched FileObjects to DFXMLObject
         for tfo in self.matches:
             # Quick hack fix for Python 2 problem with Byte_Runs element
@@ -456,11 +456,11 @@ class FileSystemProcessing():
                     sys.version_info < (3, 0)):
                     tfo.byte_runs[0].type = None
             dfxml.append(tfo)
-        
+
         # Make a DFXML file, and format using xmllint
         self.dfxml_report = self.outputdir + "/FileSystemMatching.df.xml"
         logging.info("\n>>> DFXML REPORT: %s" % self.dfxml_report)
-        
+
         # Another Python 2 portability problem. If using Python 2, decode
         # the DFXMLObject.to_dfxml() output to unicode
         if sys.version_info < (3, 0):
@@ -468,7 +468,7 @@ class FileSystemProcessing():
             temp_report = io.StringIO(temp_xml)
         else:
             temp_report = io.StringIO(dfxml.to_dfxml())
-        
+
         # Read StingIO file using minidom, then pretty print output
         xml_fi = xml.dom.minidom.parse(temp_report)
         with open(self.dfxml_report, 'w') as f:
@@ -521,7 +521,7 @@ if __name__=="__main__":
                                                    profiles = profiles,
                                                    ignore_dotdirs = ignore_dotdirs,
                                                    timestamp = timestamp)
-    
+
     fs.process_apxmls()
     fs.process_target()
     fs.dfxml_report()

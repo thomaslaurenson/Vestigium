@@ -61,7 +61,7 @@ class FilePathNormalizer():
                                                   "%WINDIR%/System32"]
         self.variable_paths["prefetch"]        = ["%WINDIR%/prefetch",
                                                   "%WINDIR%/Prefetch"]
-                                     
+
     def normalize(self, fullpath):
         """ Normalize a logical file system path value of a target file. """
         # Check root directory

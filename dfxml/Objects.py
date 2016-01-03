@@ -1267,7 +1267,7 @@ class ByteRuns(object):
                 self.append(value)
             else:
                 self._listdata[-1] = maybe_new_run
-        
+
     def iter_contents(self, raw_image, buffer_size=1048576, sector_size=512, errlog=None, statlog=None):
         """
         Generator.  Yields contents, as byte strings one block at a time, given a backing raw image path.  Relies on The SleuthKit's img_cat, so contents can be extracted from any disk image type that TSK supports.
@@ -1357,7 +1357,7 @@ class ByteRuns(object):
         #Split into namespace and tagname
         (ns, tn) = _qsplit(e.tag)
         assert tn == "byte_runs"
- 
+
         if "facet" in e.attrib:
             self.facet = e.attrib["facet"]
 
@@ -1531,7 +1531,7 @@ class TimestampObject(object):
           isinstance(value[1], str):
             self._prec = value
             return self._prec
-        
+
         m = re_precision.match(value)
         md = m.groupdict()
         tup = (int(md["num"]), md.get("unit") or "s")
@@ -1613,7 +1613,7 @@ class FileObject(object):
       "nlink",
       "original_fileobject",
       "orphan",
-      "orphan_name", # TL: Added orphan_name property      
+      "orphan_name", # TL: Added orphan_name property
       "parent_object",
       "partition",
       "seq",
@@ -1707,7 +1707,7 @@ class FileObject(object):
             # Can pass a set() of properties to ignore
             # e.g., {"filename", "sha1"}
             if propname in ignore_properties:
-                continue                     
+                continue
             oval = getattr(other, propname)
             sval = getattr(self, propname)
             if oval is None and sval is None:
@@ -1791,7 +1791,7 @@ class FileObject(object):
             #Clean up file handles
             if status_fh: status_fh.close()
             if stderr_fh: stderr_fh.close()
-            
+
         elif not self.byte_runs is None:
             for chunk in self.byte_runs.iter_contents(_image_path, buffer_size, sector_size, errlog, statlog):
                 yield chunk
@@ -2034,7 +2034,7 @@ class FileObject(object):
             _append_object("parent_object", parent_object_shadow)
 
         _append_str("filename", self.filename)
-        _append_str("filename_norm", self.filename_norm) # TL: Added filename_norm to XML out                
+        _append_str("filename_norm", self.filename_norm) # TL: Added filename_norm to XML out
         _append_str("basename", self.basename) # TL: Added basename to XML out
         _append_str("basename_norm", self.basename_norm) # TL: Added basename_norm to XML out
         _append_str("error", self.error)
@@ -2050,7 +2050,7 @@ class FileObject(object):
             _append_bool("alloc_name", self.alloc_name)
         _append_bool("used", self.used)
         _append_bool("orphan", self.orphan)
-        _append_str("orphan_name", self.orphan_name) # TL: Added orphan_name to XML out         
+        _append_str("orphan_name", self.orphan_name) # TL: Added orphan_name to XML out
         _append_bool("compressed", self.compressed)
         _append_str("inode", self.inode)
         _append_str("meta_type", self.meta_type)
@@ -2130,7 +2130,7 @@ class FileObject(object):
     def annos(self, val):
         _typecheck(val, set)
         self._annos = val
-        
+
     # TL: Added app_name property getter
     @property
     def app_name(self):
@@ -2139,8 +2139,8 @@ class FileObject(object):
     # TL: Added app_name property setter
     @app_name.setter
     def app_name(self, val):
-        self._app_name = _strcast(val)   
-        
+        self._app_name = _strcast(val)
+
     # TL: Added app_state property getter
     @property
     def app_state(self):
@@ -2149,7 +2149,7 @@ class FileObject(object):
     # TL: Added app_state property setter
     @app_state.setter
     def app_state(self, val):
-        self._app_state = _strcast(val)                
+        self._app_state = _strcast(val)
 
     @property
     def atime(self):
@@ -2174,7 +2174,7 @@ class FileObject(object):
     @basename.setter
     def basename(self, val):
         self._basename = _strcast(val)
-        
+
     # TL: Added basename_norm property getter
     @property
     def basename_norm(self):
@@ -2183,7 +2183,7 @@ class FileObject(object):
     # TL: Added basename_norm property setter
     @basename_norm.setter
     def basename_norm(self, val):
-        self._basename_norm = _strcast(val)            
+        self._basename_norm = _strcast(val)
 
     @property
     def bkup_time(self):
@@ -2289,7 +2289,7 @@ class FileObject(object):
     @filename.setter
     def filename(self, val):
         self._filename = _strcast(val)
-        
+
     # TL: Added filename_norm property getter
     @property
     def filename_norm(self):
@@ -2298,8 +2298,8 @@ class FileObject(object):
     # TL: Added filename_norm property setter
     @filename_norm.setter
     def filename_norm(self, val):
-        self._filename_norm = _strcast(val)         
-        
+        self._filename_norm = _strcast(val)
+
     @property
     def externals(self):
         """
@@ -2443,7 +2443,7 @@ class FileObject(object):
     @orphan.setter
     def orphan(self, val):
         self._orphan = _boolcast(val)
-        
+
     # TL: Added orphan_name property getter
     @property
     def orphan_name(self):
@@ -2452,7 +2452,7 @@ class FileObject(object):
     # TL: Added orphan_name property setter
     @orphan_name.setter
     def orphan_name(self, val):
-        self._orphan_name = _strcast(val)         
+        self._orphan_name = _strcast(val)
 
     @property
     def original_fileobject(self):
@@ -2583,14 +2583,14 @@ class CellObject(object):
       "app_state", # TL: Added app_state property
       "annos",
       "basename",
-      "basename_norm", # TL: Added basename_norm property      
+      "basename_norm", # TL: Added basename_norm property
       "byte_runs",
       "cellpath",
-      "cellpath_norm", # TL: Added cellpath_norm property      
+      "cellpath_norm", # TL: Added cellpath_norm property
       "data",
       "data_conversions",
       "data_encoding",
-      "data_raw", # TL: Added data_raw element      
+      "data_raw", # TL: Added data_raw element
       "data_type",
       "error",
       "mtime",
@@ -2667,7 +2667,7 @@ class CellObject(object):
             # Can pass a set() of properties to ignore
             # e.g., {"cellpath", "basename"}
             if propname in ignore_properties:
-                continue           
+                continue
             oval = getattr(other, propname)
             sval = getattr(self, propname)
             if oval is None and sval is None:
@@ -2701,22 +2701,27 @@ class CellObject(object):
                 self.basename = ce.text
             # TL: Added basename_norm to be populated
             elif ctn == "basename_norm":
-                self.basename_norm = ce.text                
+                self.basename_norm = ce.text
             elif ctn == "byte_runs":
                 self.byte_runs = ByteRuns()
                 self.byte_runs.populate_from_Element(ce)
             elif ctn == "cellpath":
                 self.cellpath = ce.text
-            # TL: Added cellpath_norm to be populated                
+            # TL: Added cellpath_norm to be populated
             elif ctn == "cellpath_norm":
-                self.cellpath_norm = ce.text                
+                self.cellpath_norm = ce.text
             elif ctn == "data":
                 self.data = ce.text
                 if ce.attrib.get("encoding"):
                     self.data_encoding = ce.attrib["encoding"]
+            # TL: Added data encoding set directly from XML tag
+            # This is different from above, where encoding in an XML attribute in
+            # this data tag
+            elif ctn == "data_encoding":
+                self.data_encoding = ce.text
             # TL: Added raw data element to be populated
             elif ctn == "data_raw":
-                self.data_raw = ce.text                  
+                self.data_raw = ce.text
             elif ctn == "data_conversions":
                 self.data_conversions = dict()
                 for cce in ce:
@@ -2748,10 +2753,10 @@ class CellObject(object):
                 self.app_state = ce.text
             # TL: Added app_name to be populated
             elif ctn == "app_name":
-                self.app_name = ce.text                
+                self.app_name = ce.text
             # TL: Added rootkey to be populated
             elif ctn == "rootkey":
-                self.rootkey = ce.text                                 
+                self.rootkey = ce.text
             else:
                 if (cns, ctn) not in _warned_elements:
                     _warned_elements.add((cns, ctn))
@@ -2824,7 +2829,7 @@ class CellObject(object):
                 if namespace_prefix:
                     tmpel.tag = namespace_prefix + name
                 else:
-                    tmpel.tag = name                    
+                    tmpel.tag = name
                 _anno_change(tmpel)
                 outel.append(tmpel)
 
@@ -2846,7 +2851,7 @@ class CellObject(object):
         _append_str("app_name", self.app_name) # TL: Added app_name to XML out
         _append_str("app_state", self.app_state) # TL: Added app_state to XML out
         _append_str("rootkey", self.rootkey) # TL: Added rootkey to XML out
-        
+
         #The experimental conversions element needs its own code
         if not self.data_conversions is None or "data_conversions" in diffs_whittle_set:
             tmpel = ET.Element("data_conversions")
@@ -2866,7 +2871,7 @@ class CellObject(object):
                         tmpccel.text = s
                         tmpcel.append(tmpccel)
                     tmpel.append(tmpcel)
-                    
+
             _anno_change(tmpel)
             outel.append(tmpel)
 
@@ -2909,7 +2914,7 @@ class CellObject(object):
     @app_name.setter
     def app_name(self, val):
         self._app_name = _strcast(val)
-        
+
     # TL: Added app_state property getter
     @property
     def app_state(self):
@@ -2918,7 +2923,7 @@ class CellObject(object):
     # TL: Added app_state property setter
     @app_state.setter
     def app_state(self, val):
-        self._app_state = _strcast(val)         
+        self._app_state = _strcast(val)
 
     @property
     def basename(self):
@@ -2938,7 +2943,7 @@ class CellObject(object):
     # TL: Added basename_norm property setter
     @basename_norm.setter
     def basename_norm(self, val):
-        self._basename_norm = _strcast(val)         
+        self._basename_norm = _strcast(val)
 
     @property
     def byte_runs(self):
@@ -2959,7 +2964,7 @@ class CellObject(object):
         if not val is None:
             _typecheck(val, str)
         self._cellpath = val
-        
+
     # TL: Added cellpath_norm property getter
     @property
     def cellpath_norm(self):
@@ -2968,7 +2973,7 @@ class CellObject(object):
     # TL: Added cellpath_norm property setter
     @cellpath_norm.setter
     def cellpath_norm(self, val):
-        self._cellpath_norm = _strcast(val)        
+        self._cellpath_norm = _strcast(val)
 
     @property
     def data(self):
@@ -3012,7 +3017,7 @@ class CellObject(object):
     def data_raw(self, val):
         if not val is None:
             _typecheck(val, str)
-        self._data_raw = val 
+        self._data_raw = val
 
     @property
     def data_type(self):
@@ -3024,18 +3029,25 @@ class CellObject(object):
         # TL: Added conversion of Registry (zimmerman) Registry value data
         # naming conventions to fit Objects.py naming conventions
         if val == "RegNone": val = "REG_NONE"
-        if val == "RegSz": val = "REG_SZ"
-        if val == "RegExpandSz": val = "REG_EXPAND_SZ"
-        if val == "RegBinary": val = "REG_BINARY"
-        if val == "RegDword": val = "REG_DWORD"
-        if val == "RegLink": val = "REG_LINK"
-        if val == "RegMultiSz": val = "REG_MULTI_SZ"
-        if val == "RegResourceList": val = "REG_RESOURCE_LIST"  
-        if val == "RegResourceRequirementsList": val = "REG_RESOURCE_REQUIREMENTS_LIST"
-        if val == "RegQword": val = "REG_QWORD"
+        elif val == "RegSz": val = "REG_SZ"
+        elif val == "RegExpandSz": val = "REG_EXPAND_SZ"
+        elif val == "RegBinary": val = "REG_BINARY"
+        elif val == "RegDword": val = "REG_DWORD"
+        elif val == "RegLink": val = "REG_LINK"
+        elif val == "RegMultiSz": val = "REG_MULTI_SZ"
+        elif val == "RegResourceList": val = "REG_RESOURCE_LIST"
+        elif val == "RegResourceRequirementsList": val = "REG_RESOURCE_REQUIREMENTS_LIST"
+        elif val == "RegQword": val = "REG_QWORD"
+        # TL: Added RegFileTime, represent as BINARY
+        elif val == "RegFileTime": val = "REG_BINARY"
         # Not 100% sure about the Registry library type of RegUnknown
         # Lets set it to no type, just to be safe
-        if val == "RegUnknown": val = "REG_NONE"
+        elif val == "RegUnknown": val = "REG_NONE"
+        # TL: Some recovered cells have incorrect data_type
+        # If the data_type is an integer, set it to binary
+        else:
+            val = "REG_BINARY"
+
         if not val in [
           None,
           "REG_NONE",
@@ -3110,7 +3122,7 @@ class CellObject(object):
         if not val is None:
             assert val in ["k", "v"]
         self._name_type = val
-       
+
     @property
     def original_cellobject(self):
         return self._original_cellobject
@@ -3130,7 +3142,7 @@ class CellObject(object):
     def parent_object(self, val):
         if not val is None:
             _typecheck(val, CellObject)
-        self._parent_object = val    
+        self._parent_object = val
 
     @property
     def root(self):
@@ -3139,7 +3151,7 @@ class CellObject(object):
     @root.setter
     def root(self, val):
         self._root = _boolcast(val)
-        
+
     # TL: Added rootkey property getter
     @property
     def rootkey(self):
@@ -3148,7 +3160,7 @@ class CellObject(object):
     # TL: Added rootkey property setter
     @rootkey.setter
     def rootkey(self, val):
-        self._rootkey = _strcast(val)            
+        self._rootkey = _strcast(val)
 
 def iterparse(filename, events=("start","end"), **kwargs):
     """
@@ -3219,7 +3231,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
                 dfxml_proxy = ET.Element(elem.tag)
                 for k in elem.attrib:
                     #Note that xmlns declarations don't appear in elem.attrib.
-                    dfxml_proxy.attrib[k] = elem.attrib[k] 
+                    dfxml_proxy.attrib[k] = elem.attrib[k]
                 _state = READING_PRESTREAM
             elif ln == "volume":
                 if _state == READING_PRESTREAM:
@@ -3230,7 +3242,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
                 #Start populating a new Volume proxy.
                 volume_proxy = ET.Element(elem.tag)
                 for k in elem.attrib:
-                    volume_proxy.attrib[k] = elem.attrib[k] 
+                    volume_proxy.attrib[k] = elem.attrib[k]
                 _state = READING_VOLUMES
             elif ln == "fileobject":
                 if _state == READING_PRESTREAM:
@@ -3291,10 +3303,10 @@ def iterparse(filename, events=("start","end"), **kwargs):
             e.cmd = subp_command
             raise e
         _logger.debug("...Done.")
-        
-        
-        
-        
+
+
+
+
 def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     """
     Generator.  Yields a stream of populated DFXMLObjects, VolumeObjects and FileObjects, paired with an event type ("start" or "end").  The DFXMLObject and VolumeObjects do NOT have their child lists populated with this method - that is left to the calling program.
@@ -3328,7 +3340,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     robj = kwargs.get("regxmlobject", RegXMLObject())
     hobj = kwargs.get("hiveobject", HiveObject())
     cobj = kwargs.get("cellobject", CellObject())
-    
+
     #The only way to efficiently populate VolumeObjects is to populate the object when the stream has hit its first FileObject.
     vobj = None
 
@@ -3362,7 +3374,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
 
         #Split tag name into namespace and local name
         (ns, ln) = _qsplit(elem.tag)
-        
+
         #print(ns,ln)
 
         if ETevent == "start":
@@ -3379,7 +3391,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
                     # if "start" in _events:
                         # yield ("start", cobj)
                 # _state = READING_FILES
-                    
+
         elif ETevent == "end":
             if ln == "cellobject":
                 if _state in (READING_PRESTREAM, READING_POSTSTREAM):
@@ -3402,13 +3414,13 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
                 if ln in ["metadata", "creator", "source"]:
                     #This is a direct child of the DFXML document property; glom onto the proxy.
                     if regxml_proxy is not None:
-                        regxml_proxy.append(elem)      
-        
-        
-        
-        
-        
-        
+                        regxml_proxy.append(elem)
+
+
+
+
+
+
 
 def parse(filename):
     """Returns a DFXMLObject populated from the contents of the (string) filename argument."""
@@ -3432,7 +3444,7 @@ def parse(filename):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    
+
     logging.basicConfig(level=logging.DEBUG)
     #Run unit tests
 

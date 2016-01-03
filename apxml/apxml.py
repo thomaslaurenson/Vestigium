@@ -8,7 +8,7 @@ Date:    2016/01/03
 
 Description:
 The apxml.py Python module is an Application Programming Interface (API)
-for the standardised APXML document. 
+for the standardised APXML document.
 
 Copyright (c) 2015, Thomas Laurenson
 
@@ -148,7 +148,7 @@ class APXMLObject(object):
         # Lists for FileObjects and CellObjects
         self._files = []
         self._cells = []
-        
+
         # Statistics object to store APXML file stats
         self.stats = StatisticsObject()
 
@@ -169,7 +169,7 @@ class APXMLObject(object):
     def iter_namespaces(self):
         """Yields (prefix, url) pairs of each namespace registered in this DFXMLObject."""
         for prefix in self._namespaces:
-            yield (prefix, self._namespaces[prefix])        
+            yield (prefix, self._namespaces[prefix])
 
     def append(self, value):
         """ Append FileObject or CellObject to APXMLObject. """
@@ -210,18 +210,18 @@ class APXMLObject(object):
                     outel.append(fi.to_Element())
             for cell in self._cells:
                 if cell.app_state == state:
-                    outel.append(cell.to_Element()) 
+                    outel.append(cell.to_Element())
 
         # Set Rusage element
         tmpel0 = self.rusage.to_Element()
         outel.append(tmpel0)
-        
+
         return outel
 
     def to_apxml(self):
         """ Write an APXMLObject to XML. """
         return _ET_tostring(self.to_Element())
-    
+
     # version setter and getter
     @property
     def version(self):
@@ -259,7 +259,7 @@ class MetadataObject(object):
                 elif ctn == "type":
                     self.type = ce.text
                 elif ctn == "publisher":
-                    self.publisher = ce.text                    
+                    self.publisher = ce.text
 
     def to_Element(self):
         outel = ET.Element("metadata")
@@ -308,7 +308,7 @@ class MetadataObject(object):
         return self._publisher
     @publisher.setter
     def publisher(self, value):
-        self._publisher = _strcast(value)        
+        self._publisher = _strcast(value)
 
 
 ################################################################################
@@ -357,7 +357,7 @@ class CreatorObject(object):
 
     def to_xml(self):
         return _ET_tostring(self.to_Element())
-        
+
     # program setter and getter
     @property
     def program(self):
@@ -442,7 +442,7 @@ class ExecutionEnvironmentObject(object):
     @start_date.setter
     def start_date(self, value):
         self._start_date = _datecast(value)
-    
+
 ################################################################################
 # Rusage Object to store DFXML metadata element information
 class RusageObject(object):
@@ -490,7 +490,7 @@ class RusageObject(object):
 ################################################################################
 # Statistics Object to store DFXML metadata element information
 class StatisticsObject(object):
-    def __init__(self, *args, **kwargs):       
+    def __init__(self, *args, **kwargs):
         self.all = 0        # Total APXML entries
         self.dirs = 0       # Directory count
         self.files = 0      # File count
@@ -500,24 +500,24 @@ class StatisticsObject(object):
         self._dirs = collections.OrderedDict()
         self._files = collections.OrderedDict()
         self._keys = collections.OrderedDict()
-        self._values = collections.OrderedDict()      
-        
+        self._values = collections.OrderedDict()
+
 ################################################################################
 def generate_stats(apxml_obj):
     """ Generate statistics from an APXMLObject. """
-    
+
     # Check if we have an APXMLObject
     if not isinstance(apxml_obj, APXMLObject):
         return
-        
+
     # Create an object to hold stats information
     apxml_obj.stats = StatisticsObject()
-    
+
     for state in apxml_obj._all_states:
         apxml_obj.stats._dirs[state] = []
         apxml_obj.stats._files[state] = []
         apxml_obj.stats._keys[state] = []
-        apxml_obj.stats._values[state] = [] 
+        apxml_obj.stats._values[state] = []
 
     # Iterate over each FileObject and CellObject and collect stats
     for obj in apxml_obj:
@@ -538,30 +538,30 @@ def generate_stats(apxml_obj):
 
         if isinstance(obj, Objects.CellObject):
             # Process Registry key
-            if obj.name_type == "k": 
+            if obj.name_type == "k":
                 apxml_obj.stats.keys += 1
                 apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
                     apxml_obj.stats._keys[obj.app_state].append(delta)
-                                    
+
             # Process Registry value
             elif obj.name_type == "v":
                 apxml_obj.stats.values += 1
                 apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
-                    apxml_obj.stats._values[obj.app_state].append(delta)                
+                    apxml_obj.stats._values[obj.app_state].append(delta)
 
-        
+
 ################################################################################
 def iterparse(filename, events=("start", "end"), **kwargs):
     """ Generator. Parses an APXML document to an APXMLObject. """
-    
-    # Open file handle to APXML doucment       
+
+    # Open file handle to APXML doucment
     fh = open(filename, encoding='utf-16-le', errors='replace')
 
     # Create APXMLObject to store all profile information
     apxml = APXMLObject()
-    
+
     # Call ElementTree iterparse on APXML document
     for (ETevent, elem) in ET.iterparse(fh, events=("start-ns", "start", "end")):
 
@@ -570,39 +570,39 @@ def iterparse(filename, events=("start", "end"), **kwargs):
             apxml.add_namespace(*elem)
             ET.register_namespace(*elem)
             continue
-        
+
         # Split element to namespace and tag name
         (ns, ln) = _qsplit(elem.tag)
-        
+
         # Process each XML tag
-        if ETevent == "start":  
+        if ETevent == "start":
             if ln == "metadata":
                 metadata = MetadataObject()
                 metadata.populate_from_Element(elem)
                 apxml.metadata = metadata
-            
+
             elif ln == "creator":
                 creator = CreatorObject()
                 creator.populate_from_Element(elem)
                 apxml.creator = creator
-            
+
             elif ln == "rusage":
                 rusage = RusageObject()
                 rusage.populate_from_Element(elem)
                 apxml.rusage = rusage
-        
+
         elif ETevent == "end":
             if ln == "fileobject":
                 fo = Objects.FileObject()
                 fo.populate_from_Element(elem)
                 apxml.append(fo)
                 apxml._all_states[fo.app_state] = None
-                    
+
             elif ln == "cellobject":
                 co = Objects.CellObject()
                 co.populate_from_Element(elem)
                 apxml.append(co)
-                apxml._all_states[co.app_state] = None  
+                apxml._all_states[co.app_state] = None
 
     # All done, return the APXMLObject
     return apxml

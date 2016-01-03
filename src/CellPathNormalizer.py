@@ -40,7 +40,7 @@ except ImportError:
     print('Error: CellPathNormalizer.py')
     print('       The FilePathNormalizer.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/Vestigium')
-    print('       Now Exiting...') 
+    print('       Now Exiting...')
     sys.exit(1)
 
 ################################################################################
@@ -65,7 +65,7 @@ class CellPathNormalizer():
         return normpath
 
     def normalize_target_co_rootkey(self, cellpath, rootkey):
-        """ 
+        """
         Normalize the cellpath rootkey of the Target CellObject (TCO), e.g.,
         Before: CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}\ControlSet001\
         After:  SYSTEM\ControlSet001\
@@ -77,16 +77,16 @@ class CellPathNormalizer():
             return normpath
 
     def normalize_target_co(self, cellpath, rootkey):
-        """ Normalize the cellpath of the Target CellObject (TCO). """       
+        """ Normalize the cellpath of the Target CellObject (TCO). """
         if cellpath:
             normpath = cellpath.split("\\")
         else:
             return cellpath
-        
+
         #if rootkey == "NTUSER.DAT":
         #    if len(normpath) >= 2:
         #        normpath[1] = "%SID%"
-        
+
         # Normalise SYSTEM Registry hive cellpath
         if rootkey == "SYSTEM":
             control_names = ["ControlSet001",
@@ -99,11 +99,11 @@ class CellPathNormalizer():
             #for name in control_names:
             if len(normpath) >= 2:
                 if normpath[1] in control_names:
-                    normpath[1] = "%CONTROLSET%"            
+                    normpath[1] = "%CONTROLSET%"
 
         normpath = "\\".join(normpath)
         return normpath
-    
+
 
     """
     def normalize(self, co):
@@ -185,4 +185,4 @@ class CellPathNormalizer():
             from the FilePathNormalizer module. """
         norm_basename = basename[3:].replace('\\', '/')
         norm_basename = self.file_path_normalizer.normalize(norm_basename)
-        return norm_basename        
+        return norm_basename

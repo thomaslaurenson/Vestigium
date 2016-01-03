@@ -46,7 +46,7 @@ except ImportError:
     print('Error: RegistryProcessing.py')
     print('       The dfxml.py module is required.')
     print('       You can download from: https://github.com/simsong/dfxml')
-    print('       Now Exiting...')   
+    print('       Now Exiting...')
     sys.exit(1)
 
 try:
@@ -55,7 +55,7 @@ except ImportError:
     print('Error: RegistryProcessing.py')
     print('       The Objects.py module is required.')
     print('       You can download from: https://github.com/simsong/dfxml')
-    print('       Now Exiting...')   
+    print('       Now Exiting...')
     sys.exit(1)
 
 try:
@@ -64,8 +64,8 @@ except ImportError:
     print('Error: RegistryProcessing.py')
     print('       The apxml.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/apxml')
-    print('       Now Exiting...') 
-    sys.exit(1)  
+    print('       Now Exiting...')
+    sys.exit(1)
 
 try:
     import FilePathNormalizer
@@ -73,7 +73,7 @@ except ImportError:
     print('Error: RegistryProcessing.py')
     print('       The FilePathNormalizer.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/Vestigium')
-    print('       Now Exiting...') 
+    print('       Now Exiting...')
     sys.exit(1)
 
 try:
@@ -82,7 +82,7 @@ except ImportError:
     print('Error: RegistryProcessing.py')
     print('       The CellPathNormalizer.py module is required.')
     print('       You can download from: https://github.com/thomaslaurenson/Vestigium')
-    print('       Now Exiting...') 
+    print('       Now Exiting...')
     sys.exit(1)
 
 ################################################################################
@@ -94,7 +94,7 @@ def sha1_file(fi):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
-    
+
 def ptime(self, t):
     """ Return the requested time format. 't' is a dfxml time value. """
     if t is None:
@@ -102,8 +102,8 @@ def ptime(self, t):
     if self.timestamp:
         return str(t.timestamp())
     else:
-        return str(t.iso8601())  
-        
+        return str(t.iso8601())
+
 def match_cell_path(tco, pco):
     """ Match the full path of target cellobject (tco) against the
         profile cellobject. """
@@ -113,11 +113,11 @@ def match_cell_type(tco, pco):
     """ Match the cell type (key or value) of the target cellobject (tco)
         against the profile cellobject (pco). """
     return tco.name_type == pco.name_type
-    
+
 def match_cell_alloc(tco, pco):
     """ Match the cell allocation of the target
         cellobject (tco) against the profile cellobject (pco). """
-    return  tco.alloc == pco.alloc        
+    return  tco.alloc == pco.alloc
 
 def match_data_type(tco, pco):
     """ Match the cell data type (string, int etc.) of the target
@@ -146,7 +146,7 @@ class RegistryProcessing():
         print("----------------------------------------")
         logging.info("\n----------------------------------------")
         logging.info(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
-        logging.info("----------------------------------------")        
+        logging.info("----------------------------------------")
 
         # List of Profile CellObjects
         self.pcos = list()
@@ -154,37 +154,37 @@ class RegistryProcessing():
         # A dictionary is generated: state => list of fileobjects.
         # For example: "install" => [cellobject, cellobject] """
         self.pcos_dict = collections.defaultdict(list)
-        
+
         self.pcos_keys = collections.defaultdict(list)
         self.pcos_values = collections.defaultdict(list)
-        
+
         # Set of target hive files to process
         self.target_hives = set()
-        
+
         # Store the Target Data Set (all HIVES) in a RegXML object
         self.tds_regxml = Objects.RegXMLObject()
 
-        # Store the Profile CellObjects in a RegXML object        
-        self.pco_regxml = Objects.RegXMLObject()        
-                      
+        # Store the Profile CellObjects in a RegXML object
+        self.pco_regxml = Objects.RegXMLObject()
+
         # Initialize the file path normalizer object
         self.file_path_normalizer = FilePathNormalizer.FilePathNormalizer()
-        
+
         # Initialize the cell path normalizer object
         self.cell_path_normalizer = CellPathNormalizer.CellPathNormalizer()
-        
+
         # Create a list for cell matches
         self.matches = list()
-        
+
         # Counter for target CellObjects to display progress
         self.target_key_count = 0
-        self.target_value_count = 0                
-        
+        self.target_value_count = 0
+
         # active_hive specifies the hive name (base name) for the hive being processed
         self.active_hive = None
-        
+
         # active_rootkey is the common root key name (SOFTWARE, SYSTEM, NTUSER.DAT)
-        self.active_rootkey = None        
+        self.active_rootkey = None
 
     def process_apxmls(self):
         """
@@ -204,12 +204,12 @@ class RegistryProcessing():
                     # Normalise the CellObject properties
                     # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
                     # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
-                    
+
                     """
                     obj.cellpath_norm = cell_path_normalizer.normalize_profile_co(obj.cellpath)
                     rootkey = obj.cellpath_norm.split("\\")[0]
                     obj.cellpath_norm = cell_path_normalizer.normalize_target_co(obj.cellpath_norm, rootkey)
-                            
+
                     # Normalize the basename
                     obj.basename_norm = None
                     if obj.basename and obj.basename.startswith("C:"):
@@ -217,35 +217,35 @@ class RegistryProcessing():
                         normbasename = normbasename.replace('/', '\\')
                         obj.basename_norm = normbasename
                         obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
-                        
+
                     # Set the application name
-                    obj.app_name = apxml_obj.metadata.app_name 
+                    obj.app_name = apxml_obj.metadata.app_name
                     """
-                    
+
                     # Add Profile CellObject (PCO) to:
                     # 1) PCO list
                     # 2) PCO dictionary
                     self.pcos.append(pco)
                     self.pcos_dict[pco.cellpath_norm].append(pco)
-                    
+
                     if pco.name_type == "k":
                         self.pcos_keys[pco.cellpath_norm].append(pco)
                     elif pco.name_type == "v":
                         self.pcos_values[pco.cellpath_norm].append(pco)
-                    
+
                     # Get set of required hives based on profile entries
                     rootkey = pco.cellpath_norm.split("\\")[0]
                     self.target_hives.add(rootkey)
                     pco.rootkey = rootkey
-                    
+
                     # Also append PCO to a RegXML object
                     self.pco_regxml.append(pco)
-                    
+
                     # Log all profile entries (Application, State, Path)
                     logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name,
                                                      pco.app_state,
                                                      pco.cellpath_norm))
-                                                     
+
         # Log all target hive names (rootkey)
         logging.info("\n>>> Target Registry hives:")
         for rootkey in self.target_hives:
@@ -253,26 +253,26 @@ class RegistryProcessing():
 
     def parse_target(self):
         """ Parse target Registry hive files. """
-        
+
         # Print header to console
         print("\n>>> Processing target hives ...")
-        
+
         self.to_process = collections.defaultdict(list)
-        
+
         # Fetch all Registry related files
         registry_files = glob.glob(self.hives_dir + "*")
-        
+
         # Classify required target hives and hive files
         for fi in registry_files:
             for rootkey in self.target_hives:
                 if fi.lower().endswith(rootkey.lower() + ".xml"):
                     self.to_process[rootkey].append(fi)
-        
+
         logging.info("\n>>> Target Registry hive files:")
         for k in self.to_process:
             for v in self.to_process[k]:
                 logging.info("  > %s\t%s" % (k,v))
-                
+
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         for rootkey in self.target_hives:
@@ -284,31 +284,32 @@ class RegistryProcessing():
                 #print("  > %s" % os.path.basename(hive))
                 self.active_hive = hive
                 self.active_rootkey = rootkey
-                
+
                 for (event, obj) in Objects.iterparse_CellObjects(hive):
                     if isinstance(obj, Objects.CellObject):
                         obj.rootkey = rootkey
                         self.process_target_co(obj)
 
     def process_target_co(self, tco):
-        """ Process each Target CellObject (TCO). """    
-        
+        """ Process each Target CellObject (TCO). """
+
         # Registry count progress indicator
         if tco.name_type == 'k':
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}".format(self.target_key_count,
-                                                                   self.target_value_count));
-            
+        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6} Hive: {2:10}".format(self.target_key_count,
+                                                                                self.target_value_count,
+                                                                                self.active_rootkey));
+
         # Normalize the TCO rootkey
         tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath,
                                                                                   self.active_rootkey)
-        
+
         # Normlaize the TCO cell path (full path)
-        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm, 
+        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm,
                                                                           self.active_rootkey)
-        
+
         # Normalize the basename
         tco.basename_norm = None
         if tco.basename and tco.basename.startswith("C:"):
@@ -316,34 +317,34 @@ class RegistryProcessing():
             normbasename = normbasename.replace('/', '\\')
             tco.basename_norm = normbasename
             if tco.cellpath_norm:
-                tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename, 
+                tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename,
                                                               tco.basename_norm)
-        
+
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
                 for pco in self.pcos_keys[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
-                
+
         if tco.name_type == 'v':
             if tco.cellpath_norm in self.pcos_values:
                 for pco in self.pcos_values[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
-               
+
     def match_tco_pco(self, tco, pco):
         """ Match the Target CellObject (TCO) to Profile CellObjects (PCO). """
-        
+
         # Match Registry key (path, allocation)
         if tco.name_type == "k":
-            if (match_cell_path(tco, pco) and 
+            if (match_cell_path(tco, pco) and
                 match_cell_alloc(tco, pco)):
                 ##print("FOUND KEY: %s" % tco.cellpath_norm)
-                
+
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched"}
                 tco.original_cellobject = pco
                 tco.active_hive = self.active_hive
                 # Log matched entries, append matched TCO to matches
-                logging.info("  > KEY: %s\t%s" % (tco.cellpath, 
+                logging.info("  > KEY: %s\t%s" % (tco.cellpath,
                                                   tco.alloc))
                 logging.info("         %s\t%s\t%s\t%s" % (pco.app_name,
                                                           pco.app_state,
@@ -351,24 +352,24 @@ class RegistryProcessing():
                                                           pco.alloc))
                 self.matches.append(tco)
                 return
-        
-        # Match Registry value 
+
+        # Match Registry value
         elif tco.name_type == "v":
-            
+
             # Hard match: path, data type, actual data, allocation
             if (match_cell_path(tco, pco) and
                 match_data_type(tco, pco) and
-                match_data(tco, pco) and 
+                match_data(tco, pco) and
                 match_cell_alloc(tco, pco)):
                 ##print("FOUND VALUE: %s" % tco.cellpath_norm)
-                
+
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched"}
                 tco.original_cellobject = pco
                 tco.active_hive = self.active_hive
-                
+
                 # Log matched entries, append matched TCO to matches
-                logging.info("  > VALUE HARD: %s\t%s" % (tco.cellpath, 
+                logging.info("  > VALUE HARD: %s\t%s" % (tco.cellpath,
                                                          tco.alloc))
                 logging.info("                %s\t%s\t%s\t%s" % (pco.app_name,
                                                                  pco.app_state,
@@ -376,20 +377,20 @@ class RegistryProcessing():
                                                                  pco.alloc))
                 self.matches.append(tco)
                 return
-            
+
             # Soft match: path, data type, allocation
             elif (match_cell_path(tco, pco) and
                   match_data_type(tco, pco) and
                   match_cell_alloc(tco, pco)):
                 ##print("FOUND SOFT VALUE: %s" % tco.cellpath_norm)
-                
+
                 # Add in matched annotation, append matched PCO, specify hive
                 tco.annos = {"matched_soft"}
                 tco.original_cellobject = pco
                 tco.active_hive = self.active_hive
-                
+
                 # Log matched entries, append matched TCO to matches
-                logging.info("  > VALUE SOFT: %s\t%s" % (tco.cellpath, 
+                logging.info("  > VALUE SOFT: %s\t%s" % (tco.cellpath,
                                                          tco.alloc))
                 logging.info("                %s\t%s\t%s\t%s" % (pco.app_name,
                                                                  pco.app_state,
@@ -402,17 +403,17 @@ class RegistryProcessing():
         """ Print overview of results to log file. """
 
         # Log results overview
-        logging.info("\n\n>>> Windows Registry Analysis Overview:")    
+        logging.info("\n\n>>> Windows Registry Analysis Overview:")
         profile_states = [pco.app_state for pco in self.pcos]
         target_states = [tco.original_cellobject.app_state for tco in self.matches]
         for state in set(profile_states):
             logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
-                                                       target_states.count(state)))        
+                                                       target_states.count(state)))
 
         # Provide more detailed results, log a list of:
         # 1) Detected results (app, state, path)
-        # 2) Not Detected results (app, state, path)        
+        # 2) Not Detected results (app, state, path)
         found = list()
         notfound = list()
 
@@ -422,7 +423,7 @@ class RegistryProcessing():
         for pco in self.pco_regxml:
             a_match = False
             for tco in self.matches:
-                diffs = Objects.CellObject.compare_to_other(pco, 
+                diffs = Objects.CellObject.compare_to_other(pco,
                                                             tco.original_cellobject,
                                                             ignore_properties = {"cellpath, basename"})
                 if not diffs:
@@ -430,62 +431,62 @@ class RegistryProcessing():
                     a_match = True
             if not a_match:
                 notfound.append(pco)
-                  
-        # Log found PCOs  
+
+        # Log found PCOs
         logging.info("\n>>> Windows Registry Entries - Detected: %d" % len(found))
         for pco in found:
-            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, 
-                                                 pco.app_state, 
-                                                 pco.name_type, 
+            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name,
+                                                 pco.app_state,
+                                                 pco.name_type,
                                                  pco.cellpath_norm))
 
         # Log notfound PCOs
         logging.info("\n>>> Windows Registry Entries - NOT Detected: %d" % len(notfound))
         for pco in notfound:
-            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name, 
-                                                 pco.app_state, 
-                                                 pco.name_type, 
+            logging.info("    %s\t%s\t%s\t%s" % (pco.app_name,
+                                                 pco.app_state,
+                                                 pco.name_type,
                                                  pco.cellpath_norm))
-                                                 
+
         # Print overview of results based on application state and hive file
         ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
         ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
         ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "install"]
-        
+
         ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "open"]
         ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "open"]
-        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]  
-        
+        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]
+
         clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "closed"]
         clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "closed"]
-        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]     
-        
+        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]
+
         uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "uninstall"]
         uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "uninstall"]
         uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "uninstall"]
-        
-        total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)      
+
+        total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)
         total_ope = len(ope_ntu) + len(ope_sof) + len(ope_sys)
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
-        total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)            
-        
+        total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)
+
         logging.info("\n>>> Windows Registry Analysis Overview:")
-        logging.info("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive", 
-                                                   "Install", 
+        logging.info("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive",
+                                                   "Install",
                                                    "Open",
                                                    "Close",
                                                    "Uninstall"))
-        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SOFTWARE", 
+        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SOFTWARE",
                                                    len(ins_sof),
                                                    len(ope_sof),
                                                    len(clo_sof),
-                                                   len(uni_sof)))                          
-        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SYSTEM", 
+                                                   len(uni_sof)))
+        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SYSTEM",
                                                    len(ins_sys),
                                                    len(ope_sys),
                                                    len(clo_sys),
                                                    len(uni_sys)))
-        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("NTUSER", 
+        logging.info("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("NTUSER",
                                                    len(ins_ntu),
                                                    len(ope_ntu),
                                                    len(clo_ntu),
@@ -494,51 +495,51 @@ class RegistryProcessing():
                                                    total_ins,
                                                    total_ope,
                                                    total_clo,
-                                                   total_uni))                                                 
+                                                   total_uni))
 
 
     def results_overview(self):
         """ Print overview of results to console. """
-        
+
         # Print overview of results based on application state and hive file
         ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
         ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
         ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "install"]
-        
+
         ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "open"]
         ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "open"]
-        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]  
-        
+        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]
+
         clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "closed"]
         clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "closed"]
-        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]     
-        
+        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]
+
         uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "uninstall"]
         uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "uninstall"]
         uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "uninstall"]
-        
-        total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)      
+
+        total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)
         total_ope = len(ope_ntu) + len(ope_sof) + len(ope_sys)
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
-        total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)            
-        
+        total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)
+
         print("\n>>> Windows Registry Analysis Overview:")
-        print("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive", 
-                                                   "Install", 
+        print("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive",
+                                                   "Install",
                                                    "Open",
                                                    "Close",
                                                    "Uninstall"))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SOFTWARE", 
+        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SOFTWARE",
                                                    len(ins_sof),
                                                    len(ope_sof),
                                                    len(clo_sof),
-                                                   len(uni_sof)))                          
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SYSTEM", 
+                                                   len(uni_sof)))
+        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SYSTEM",
                                                    len(ins_sys),
                                                    len(ope_sys),
                                                    len(clo_sys),
                                                    len(uni_sys)))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("NTUSER", 
+        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("NTUSER",
                                                    len(ins_ntu),
                                                    len(ope_ntu),
                                                    len(clo_ntu),
@@ -551,30 +552,30 @@ class RegistryProcessing():
 
     def regxml_report(self):
         """ Create a RegXML document with all matched Registry entries. """
-    
+
         # Create a HiveObject to append matched cells
         hives = dict()
-        
+
         # Determine source hive files where matches were found
         hive_filenames = {tco.active_hive for tco in self.matches}
-        
+
         # Create a hive object for each source hive file
         for hive_filename in hive_filenames:
             hives[hive_filename] = Objects.HiveObject(filename=hive_filename)
-            
+
         # Append matched CellObjects to the correct target hive
         for hive_filename in hives:
             for tco in self.matches:
                 if hive_filename == tco.active_hive:
                     hives[hive_filename].append(tco)
-        
+
         # Create a RegXMLObject
         regxml = Objects.RegXMLObject()
-        
+
         # Add XML Name Space for "delta" attribute to RegXMLObject
         XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
-        regxml.add_namespace("delta", XMLNS_DELTA)        
-        
+        regxml.add_namespace("delta", XMLNS_DELTA)
+
         # Append each HiveObject to the RegXMLObject
         for hive_filename in hives:
             regxml.append(hives[hive_filename])
@@ -582,7 +583,7 @@ class RegistryProcessing():
         # Make a RegXML document
         report_name = self.outputdir + "/RegistryMatching.reg.xml"
         logging.info("\n>>> RegXML REPORT: %s" % report_name)
-        
+
         # Python 2 portability problem. If using Python 2, decode the to_regxml()
         # string output to unicode and store in a Python StringIO object.
         # If Python 3, just create a Python StringIO object
@@ -591,13 +592,13 @@ class RegistryProcessing():
             temp_report = io.StringIO(temp_xml)
         else:
             temp_report = io.StringIO(regxml.to_regxml())
-            
+
         # Read StingIO file using minidom, then pretty print output
         xml_fi = xml.dom.minidom.parse(temp_report)
         with open(report_name, 'w') as f:
             f.write(xml_fi.toprettyxml(indent="  "))
-        f.close()        
-        
+        f.close()
+
 ################################################################################
 ################################################################################
 if __name__=="__main__":
