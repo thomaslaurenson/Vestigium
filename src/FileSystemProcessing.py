@@ -167,6 +167,7 @@ class FileSystemProcessing():
         # Counter for target FileObjects to display progress
         self.target_file_count = 0
         self.target_dir_count = 0
+        self.matches_count = 0
 
 
     def process_apxmls(self):
@@ -269,7 +270,7 @@ class FileSystemProcessing():
             self.target_dir_count += 1
         elif tfo.meta_type == 1:
             self.target_file_count += 1
-        sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}".format(self.target_dir_count, self.target_file_count));
+        sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
 
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
@@ -299,6 +300,7 @@ class FileSystemProcessing():
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
+                        self.matches_count += 1
                         logging.info("  > DIRECTORY: %s\t%s" % (tfo.filename, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
@@ -311,6 +313,7 @@ class FileSystemProcessing():
                         tfo.annos = {"matched_soft"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
+                        self.matches_count += 1
                         logging.info("  > FILE SOFT: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
@@ -318,6 +321,7 @@ class FileSystemProcessing():
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
+                        self.matches_count += 1
                         logging.info("  > FILE HARD: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
@@ -335,6 +339,7 @@ class FileSystemProcessing():
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
+                        self.matches_count += 1
                         logging.info("  > FILE ORPH: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
@@ -347,6 +352,7 @@ class FileSystemProcessing():
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
+                        self.matches_count += 1
                         logging.info("  > FILE SHA1: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
 

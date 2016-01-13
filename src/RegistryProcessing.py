@@ -179,6 +179,7 @@ class RegistryProcessing():
         # Counter for target CellObjects to display progress
         self.target_key_count = 0
         self.target_value_count = 0
+        self.matches_count = 0
 
         # active_hive specifies the hive name (base name) for the hive being processed
         self.active_hive = None
@@ -298,9 +299,7 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6} Hive: {2:10}".format(self.target_key_count,
-                                                                                self.target_value_count,
-                                                                                self.active_rootkey));
+        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
 
         # Normalize the TCO rootkey
         tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath,
@@ -319,7 +318,7 @@ class RegistryProcessing():
             if tco.cellpath_norm:
                 tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename,
                                                               tco.basename_norm)
-
+        #print(tco.cellpath_norm)
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
                 for pco in self.pcos_keys[tco.cellpath_norm]:
@@ -332,7 +331,9 @@ class RegistryProcessing():
 
     def match_tco_pco(self, tco, pco):
         """ Match the Target CellObject (TCO) to Profile CellObjects (PCO). """
-
+        #if "truecrypt" in tco.cellpath_norm.lower():
+        #    print(tco.cellpath_norm)
+        #    print(pco.cellpath_norm)
         # Match Registry key (path, allocation)
         if tco.name_type == "k":
             if (match_cell_path(tco, pco) and
@@ -351,11 +352,11 @@ class RegistryProcessing():
                                                           pco.cellpath_norm,
                                                           pco.alloc))
                 self.matches.append(tco)
+                self.matches_count += 1
                 return
 
         # Match Registry value
         elif tco.name_type == "v":
-
             # Hard match: path, data type, actual data, allocation
             if (match_cell_path(tco, pco) and
                 match_data_type(tco, pco) and
@@ -376,6 +377,7 @@ class RegistryProcessing():
                                                                  pco.cellpath_norm,
                                                                  pco.alloc))
                 self.matches.append(tco)
+                self.matches_count += 1
                 return
 
             # Soft match: path, data type, allocation
@@ -397,6 +399,7 @@ class RegistryProcessing():
                                                                  pco.cellpath_norm,
                                                                  pco.alloc))
                 self.matches.append(tco)
+                self.matches_count += 1
                 return
 
     def results(self):
@@ -500,6 +503,15 @@ class RegistryProcessing():
 
     def results_overview(self):
         """ Print overview of results to console. """
+
+        # Log results overview
+        print("\n\n>>> Windows Registry Analysis Overview:")
+        profile_states = [pco.app_state for pco in self.pcos]
+        target_states = [tco.original_cellobject.app_state for tco in self.matches]
+        for state in set(profile_states):
+            print("    {0:<20s} {1:5d} {2:10d}".format(state,
+                                                       profile_states.count(state),
+                                                       target_states.count(state)))
 
         # Print overview of results based on application state and hive file
         ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]

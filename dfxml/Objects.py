@@ -3045,8 +3045,8 @@ class CellObject(object):
         elif val == "RegUnknown": val = "REG_NONE"
         # TL: Some recovered cells have incorrect data_type
         # If the data_type is an integer, set it to binary
-        else:
-            val = "REG_BINARY"
+        #else:
+        #    val = "REG_BINARY"
 
         if not val in [
           None,
