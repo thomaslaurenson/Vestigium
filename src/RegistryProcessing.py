@@ -141,9 +141,9 @@ class RegistryProcessing():
         self.timestamp = timestamp
 
         # Print banner for Registry processing
-        print("\n\n----------------------------------------")
-        print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
-        print("----------------------------------------")
+        #print("\n\n----------------------------------------")
+        #print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
+        #print("----------------------------------------")
         logging.info("\n----------------------------------------")
         logging.info(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
         logging.info("----------------------------------------")
@@ -192,12 +192,12 @@ class RegistryProcessing():
         Method to parse the RegXML CellObjects from the
         Application Profile XML structure.
         """
-        print(">>> Processing application profiles ...")
+        #print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("  > Processing: %s" % os.path.basename(profile))
+            #print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
@@ -256,7 +256,7 @@ class RegistryProcessing():
         """ Parse target Registry hive files. """
 
         # Print header to console
-        print("\n>>> Processing target hives ...")
+        #print("\n>>> Processing target hives ...")
 
         self.to_process = collections.defaultdict(list)
 
@@ -299,19 +299,22 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
+        #sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
 
         # Normalize the TCO rootkey
-        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath,
+        if tco.cellpath is not None:
+            tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath.lower(),
                                                                                   self.active_rootkey)
 
-        # Normlaize the TCO cell path (full path)
-        tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm,
+            # Normlaize the TCO cell path (full path)
+            tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm,
                                                                           self.active_rootkey)
-
+        else:
+            tco.cellpath_norm == None
+                        
         # Normalize the basename
         tco.basename_norm = None
-        if tco.basename and tco.basename.startswith("C:"):
+        if tco.basename and tco.basename.startswith("c:"):
             normbasename = self.file_path_normalizer.normalize(tco.basename)
             normbasename = normbasename.replace('/', '\\')
             tco.basename_norm = normbasename
@@ -512,7 +515,7 @@ class RegistryProcessing():
             print("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
                                                        target_states.count(state)))
-
+        return
         # Print overview of results based on application state and hive file
         ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
         ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
@@ -535,7 +538,7 @@ class RegistryProcessing():
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
         total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)
 
-        print("\n>>> Windows Registry Analysis Overview:")
+        print(">>> Windows Registry Analysis Overview:")
         print("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive",
                                                    "Install",
                                                    "Open",

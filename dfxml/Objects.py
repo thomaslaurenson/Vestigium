@@ -992,7 +992,9 @@ class ByteRun(object):
       "fill",
       "len",
       "type",
-      "uncompressed_len"
+      "uncompressed_len",
+      "sha1",
+      "md5"
     ])
 
     def __init__(self, *args, **kwargs):
@@ -1080,7 +1082,17 @@ class ByteRun(object):
             if prop not in _warned_byterun_attribs:
                 _warned_byterun_attribs.add(prop)
                 _logger.warning("No instructions present for processing this attribute found on a byte run: %r." % prop)
-
+        # TL: Quick fix to read in block hashes for analysis
+        # Need to revisit in future for better error checking
+        for ce in e.findall("./*"):
+            (cns, ctn) = _qsplit(ce.tag)        
+            if ctn == "hashdigest":
+                setattr(self, "type", ce.attrib)
+                if ce.attrib["type"] == "md5":
+                    setattr(self, "md5", ce.text)
+                elif ce.attrib["type"] == "sha1":
+                    setattr(self, "md5", ce.text)
+            
     def to_Element(self):
         outel = ET.Element("byte_run")
         for prop in ByteRun._all_properties:
@@ -1095,6 +1107,22 @@ class ByteRun(object):
                 outel.attrib[prop] = str(val)
 
         return outel
+
+    @property
+    def sha1(self):
+        return self._sha1
+
+    @sha1.setter
+    def sha1(self, val):
+        self._sha1 = _strcast(val)
+        
+    @property
+    def md5(self):
+        return self._md5
+
+    @md5.setter
+    def md5(self, val):
+        self._md5 = _strcast(val)        
 
     @property
     def file_offset(self):
@@ -2589,7 +2617,7 @@ class CellObject(object):
       "cellpath_norm", # TL: Added cellpath_norm property
       "data",
       "data_conversions",
-      "data_encoding",
+      "data_encoding", # TL: Added data_encoding element
       "data_raw", # TL: Added data_raw element
       "data_type",
       "error",
@@ -3036,10 +3064,14 @@ class CellObject(object):
         elif val == "RegLink": val = "REG_LINK"
         elif val == "RegMultiSz": val = "REG_MULTI_SZ"
         elif val == "RegResourceList": val = "REG_RESOURCE_LIST"
+        elif val == "RegFullResourceDescription": val = "REG_FULL_RESOURCE_DESCRIPTOR"
         elif val == "RegResourceRequirementsList": val = "REG_RESOURCE_REQUIREMENTS_LIST"
         elif val == "RegQword": val = "REG_QWORD"
         # TL: Added RegFileTime, represent as BINARY
         elif val == "RegFileTime": val = "REG_BINARY"
+        # TL: Added 14 + 12, represented as BINARY
+        elif val == "14": val = "REG_BINARY"
+        elif val == "12": val = "REG_BINARY"
         # Not 100% sure about the Registry library type of RegUnknown
         # Lets set it to no type, just to be safe
         elif val == "RegUnknown": val = "REG_NONE"

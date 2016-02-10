@@ -130,9 +130,9 @@ class FileSystemProcessing():
         self.timestamp = timestamp
 
         # Print banner for file system processing
-        print("\n-----------------------------------")
-        print(">>> PERFORMING FILE SYSTEM ANALYSIS")
-        print("-----------------------------------")
+        #print("\n-----------------------------------")
+        #print(">>> PERFORMING FILE SYSTEM ANALYSIS")
+        #print("-----------------------------------")
         logging.info("\n-----------------------------------")
         logging.info(">>> PERFORMING FILE SYSTEM ANALYSIS")
         logging.info("-----------------------------------")
@@ -174,12 +174,12 @@ class FileSystemProcessing():
         """ Process Application Profiles (APXML documents). """
 
         # Print heaser
-        print(">>> Processing application profiles ...")
+        #print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("  > Processing: %s" % os.path.basename(profile))
+            #print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
@@ -234,7 +234,7 @@ class FileSystemProcessing():
         """ Parse the file system of the target data set. """
 
         # Print header
-        print("\n>>> Processing target data set ...")
+        #print("\n>>> Processing target data set ...")
         logging.info("\n>>> DETECTED FILE SYSTEM ARTIFACTS:")
 
         # Process the target data set
@@ -270,7 +270,7 @@ class FileSystemProcessing():
             self.target_dir_count += 1
         elif tfo.meta_type == 1:
             self.target_file_count += 1
-        sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
+        #sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
 
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
@@ -420,7 +420,8 @@ class FileSystemProcessing():
 
     def results_overview(self):
         """ Print overview of results to console. """
-        print("\n>>> File System Analysis Overview:")
+        #print("\n>>> File System Analysis Overview:")
+        print(">>> %s" % self.imagefile)
         profile_states = [pfo.app_state for pfo in self.pfos]
         target_states = [tfo.original_fileobject.app_state for tfo in self.matches]
         for state in set(profile_states):

@@ -109,6 +109,9 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     parser.add_argument("apxmls",
                         help = "Application Profile XML document(s)",
                         nargs = '+')
+    parser.add_argument("-e",
+                        help = "Experimental testing mode.",
+                        action = 'store')
     parser.add_argument("--dfxml",
                         metavar = 'DFXML',
                         action = 'store',
@@ -178,6 +181,40 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     logging.info("    Ignore dotdirs:   %s" % ignore_dotdirs)
     logging.info("    Timestamp:        %s" % timestamp)
     logging.info("    Zap Output (dir): %s" % zapdir)
+
+    #print("################################")
+    #print(">>> Target data set information:")
+    #print("  > %s" % imagefile)
+
+    if (args.e == 'file'):
+        fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
+                                               xmlfile = xmlfile,
+                                               outputdir = outputdir,
+                                               profiles = profiles,
+                                               ignore_dotdirs = ignore_dotdirs,
+                                               timestamp = timestamp)
+        fs.process_apxmls()
+        fs.process_target()
+        fs.dfxml_report()
+        fs.results()
+        fs.results_overview()
+        quit()
+        
+    if (args.e == 'reg'):
+        print(">>> %s" % imagefile)
+        reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
+                                    xmlfile = xmlfile,
+                                    outputdir = outputdir,
+                                    profiles = profiles,
+                                    hives_dir = hives_dir,
+                                    timestamp = timestamp)
+        reg.process_apxmls()
+        reg.parse_target()
+        reg.regxml_report()
+        reg.results() 
+        reg.results_overview() 
+        
+        quit()
 
     #"""
     ##############################
