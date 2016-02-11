@@ -4,13 +4,13 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/12/28
+Date:    2016/02/12
 
 Description:
 CellPathNormalizer.py is a Vestigium module to normalize the full path
 of a Windows Registry artifact.
 
-Copyright (c) 2015, Thomas Laurenson
+Copyright (c) 2016, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __version__ = "1.0.0"
-
-import codecs
 
 try:
     import FilePathNormalizer
@@ -58,9 +56,6 @@ class CellPathNormalizer():
             normpath = normpath[5:]
         if normpath.startswith("hku\\"):
             normpath = normpath[4:]
-            #normpath = normpath.split("\\")
-            #normpath[0] = "%SID%"
-            #normpath = "\\".join(normpath)
             normpath = "ntuser.dat\\" + normpath
         return normpath
 

@@ -4,12 +4,12 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/12/28
+Date:    2016/02/12
 
 Description:
 FileSystemMatching.py is a Vestigium module to perform file system analysis.
 
-Copyright (c) 2015, Thomas Laurenson
+Copyright (c) 2016, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
@@ -121,7 +121,7 @@ class FileSystemProcessing():
     def __init__(self, imagefile=None, xmlfile=None, outputdir=None, profiles=None, ignore_dotdirs=False, timestamp=False):
         """ Initialise FileSystemProcessing object. """
 
-        # Global variables
+        # Object variables
         self.imagefile = imagefile
         self.xmlfile = xmlfile
         self.profiles = profiles
@@ -169,50 +169,18 @@ class FileSystemProcessing():
         self.target_dir_count = 0
         self.matches_count = 0
 
-
     def process_apxmls(self):
         """ Process Application Profiles (APXML documents). """
-
-        # Print heaser
-        #print(">>> Processing application profiles ...")
+        print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            #print("  > Processing: %s" % os.path.basename(profile))
+            print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
                 if isinstance(pfo, Objects.FileObject):
-                    # Normalise the FileObject properties
-                    # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
-                    # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
-
-                    """
-                    # Add basename to FileObject
-                    basename = obj.filename.split("\\")
-                    obj.basename = basename[len(basename) - 1]
-
-                    # Normalize the file path and append to FileObject
-                    obj.filename_norm = file_path_normalizer.normalize(obj.filename)
-
-                    # Use filename_norm to extract basename_norm
-                    basename_norm = obj.filename_norm.split("/")
-                    obj.basename_norm = basename_norm[len(basename_norm) - 1]
-
-                    # LiveDiff stores SHA-1 hashes in uppercase, convert to lower
-                    if obj.sha1 is not None:
-                        obj.sha1 = obj.sha1.lower()
-
-                    # Set the application name
-                    obj.app_name = apxml_obj.metadata.app_name
-
-                    # Add a orphan_name to only unallocated files
-                    if not obj.is_allocated() and obj.meta_type == 1:
-                        split = obj.filename.split("\\")
-                        obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
-                    """
-
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary
@@ -232,9 +200,7 @@ class FileSystemProcessing():
 
     def process_target(self):
         """ Parse the file system of the target data set. """
-
-        # Print header
-        #print("\n>>> Processing target data set ...")
+        print("\n>>> Processing target data set ...")
         logging.info("\n>>> DETECTED FILE SYSTEM ARTIFACTS:")
 
         # Process the target data set
@@ -252,7 +218,7 @@ class FileSystemProcessing():
                     # Process the individual FileObject against target
                     self.process_target_fi(obj)
 
-            #### Save DFXML file: Format using minidom then write to file
+            # Save DFXML file: Format using minidom then write to file
             temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
             xml_fi = xml.dom.minidom.parse(temp_fi)
             dfxml_report = xml_fi.toprettyxml(indent="  ")
@@ -264,23 +230,16 @@ class FileSystemProcessing():
 
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
-
         # File system count progress indicator
         if tfo.meta_type == 2:
             self.target_dir_count += 1
         elif tfo.meta_type == 1:
             self.target_file_count += 1
-        #sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
+        sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
 
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
             return
-
-        """
-        IN FUTURE: Add in code to extract hive files
-        This would remove requirement to re process target data set
-        COULD ADD ANOTHER METHOD TO CHECK FOR HIVES
-        """
 
         # Normalize the TFO full path/filename
         tfo.filename_norm = self.file_path_normalizer.normalize(tfo.filename)
@@ -361,7 +320,6 @@ class FileSystemProcessing():
         """ Match a directory artifact. """
         return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
 
-
     def match_file(self, tfo, pfo):
         """ Match a data file artifact. """
         if (match_filename_norm(tfo, pfo) and
@@ -375,11 +333,8 @@ class FileSystemProcessing():
         else:
             return 0
 
-
     def results(self):
         """ Print overview of results to log file. """
-
-        # Log results overview
         logging.info("\n>>> File System Analysis Overview:")
         profile_states = [pfo.app_state for pfo in self.pfos]
         target_states = [tfo.original_fileobject.app_state for tfo in self.matches]
@@ -417,7 +372,6 @@ class FileSystemProcessing():
         for pfo in notfound:
             logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
 
-
     def results_overview(self):
         """ Print overview of results to console. """
         #print("\n>>> File System Analysis Overview:")
@@ -429,11 +383,8 @@ class FileSystemProcessing():
                                                        profile_states.count(state),
                                                        target_states.count(state)))
 
-
     def dfxml_report(self):
         """ Generate a DFXML report of matches. """
-
-        # Outline Dublin Core metadata to include
         dc = {"name" : os.path.basename(__file__),
               "type" : "Vestigium Report",
               "date" : datetime.datetime.now().isoformat(),
@@ -514,22 +465,26 @@ if __name__=="__main__":
     outputdir = os.path.abspath(args.outputdir)
     profiles = args.apxmls
     xmlfile = args.dfxml
-    hives_dir = args.hives
     ignore_dotdirs = args.d
     timestamp = args.t
-    zapdir = args.z
 
     ##############################
     # Perform file system analysis
     ##############################
     fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
-                                                   xmlfile = xmlfile,
-                                                   outputdir = outputdir,
-                                                   profiles = profiles,
-                                                   ignore_dotdirs = ignore_dotdirs,
-                                                   timestamp = timestamp)
-
+                                           xmlfile = xmlfile,
+                                           outputdir = outputdir,
+                                           profiles = profiles,
+                                           ignore_dotdirs = ignore_dotdirs,
+                                           timestamp = timestamp)
     fs.process_apxmls()
     fs.process_target()
     fs.dfxml_report()
     fs.results()
+    fs.results_overview()
+
+    # Print overview of results
+    print("\n\n-----------------------")
+    print(">>> OVERVIEW OF RESULTS")
+    print("-----------------------")
+    fs.results_overview()

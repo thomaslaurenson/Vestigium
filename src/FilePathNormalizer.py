@@ -4,13 +4,13 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/12/28
+Date:    2016/02/12
 
 Description:
 FilePathNormalizer.py is a Vestigium module to normalize the full path
-of a file system artifact.
+of a file system entry.
 
-Copyright (c) 2015, Thomas Laurenson
+Copyright (c) 2016, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
