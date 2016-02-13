@@ -4,13 +4,13 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2016/02/12
+Date:    2015/12/28
 
 Description:
 CellPathNormalizer.py is a Vestigium module to normalize the full path
 of a Windows Registry artifact.
 
-Copyright (c) 2016, Thomas Laurenson
+Copyright (c) 2015, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 __version__ = "1.0.0"
 
+import codecs
+
 try:
     import FilePathNormalizer
 except ImportError:
@@ -52,11 +54,14 @@ class CellPathNormalizer():
         """ Normalize the cellpath of the Profile CellObject (PCO). """
         normpath = cellpath
         # Remove Registry hive naming convention
-        if normpath.startswith("hklm\\"):
+        if normpath.startswith("HKLM\\"):
             normpath = normpath[5:]
-        if normpath.startswith("hku\\"):
+        if normpath.startswith("HKU\\"):
             normpath = normpath[4:]
-            normpath = "ntuser.dat\\" + normpath
+            normpath = normpath.split("\\")
+            del normpath[0]
+            normpath = "\\".join(normpath)
+            normpath = "NTUSER.DAT\\" + normpath
         return normpath
 
     def normalize_target_co_rootkey(self, cellpath, rootkey):
@@ -72,10 +77,7 @@ class CellPathNormalizer():
             return normpath
 
     def normalize_target_co(self, cellpath, rootkey):
-        """ Normalize the cellpath of the Target CellObject (TCO).
-        Before: CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}\ControlSet001\
-        After:  SYSTEM\%CONTROLSET%\
-        """
+        """ Normalize the cellpath of the Target CellObject (TCO). """
         if cellpath:
             normpath = cellpath.split("\\")
         else:
@@ -86,18 +88,18 @@ class CellPathNormalizer():
         #        normpath[1] = "%SID%"
 
         # Normalise SYSTEM Registry hive cellpath
-        if rootkey == "system":
-            control_names = ["controlset001",
-                             "controlset002",
-                             "controlset003",
-                             "currentcontrolset",
-                             "clone"]
+        if rootkey == "SYSTEM":
+            control_names = ["ControlSet001",
+                             "ControlSet002",
+                             "ControlSet003",
+                             "CurrentControlSet",
+                             "Clone"]
             # If path has "control set" name, normalise target path
             # See: http://support.microsoft.com/kb/100010
             #for name in control_names:
             if len(normpath) >= 2:
                 if normpath[1] in control_names:
-                    normpath[1] = "%controlset%"
+                    normpath[1] = "%CONTROLSET%"
 
         normpath = "\\".join(normpath)
         return normpath

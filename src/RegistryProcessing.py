@@ -202,6 +202,31 @@ class RegistryProcessing():
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
+                    # Normalize the cell path
+                    obj.cellpath_norm = cell_path_normalizer.normalize_profile_co(obj.cellpath)
+                    rootkey = obj.cellpath_norm.split("\\")[0]
+                    obj.cellpath_norm = cell_path_normalizer.normalize_target_co(obj.cellpath_norm, rootkey)
+                    obj.cellpath_norm = obj.cellpath_norm.lower()
+                    # Normalize the basename
+                    obj.basename_norm = None
+                    if obj.basename and obj.basename.startswith("C:"):
+                        normbasename = file_path_normalizer.normalize(obj.basename)
+                        normbasename = normbasename.replace('/', '\\')
+                        obj.basename_norm = normbasename
+                        obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
+
+                    elif obj.basename and obj.basename.startswith("P:"):
+                        # Decrypt user assist entry and normalise
+                        normbasename = codecs.decode(obj.basename, "rot_13")
+                        if normbasename.startswith("C:"):
+                            normbasename = file_path_normalizer.normalize(obj.basename)
+                            normbasename = normbasename.replace('/', '\\')
+                            obj.basename_norm = normbasename
+                            obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
+
+                    # Set the application name
+                    obj.app_name = apxml_obj.metadata.app_name                
+                
                     # Add Profile CellObject (PCO) to:
                     # 1) PCO list
                     # 2) PCO dictionary

@@ -181,6 +181,29 @@ class FileSystemProcessing():
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
                 if isinstance(pfo, Objects.FileObject):
+                    # Add basename to FileObject
+                    basename = obj.filename.split("\\")
+                    obj.basename = basename[len(basename) - 1]
+
+                    # Normalize the file path and append to FileObject
+                    obj.filename_norm = file_path_normalizer.normalize(obj.filename)
+
+                    # Use filename_norm to extract basename_norm
+                    basename_norm = obj.filename_norm.split("/")
+                    obj.basename_norm = basename_norm[len(basename_norm) - 1]
+
+                    # LiveDiff stores SHA-1 hashes in uppercase, convert to lower
+                    if obj.sha1 is not None:
+                        obj.sha1 = obj.sha1.lower()
+
+                    # Set the application name
+                    obj.app_name = apxml_obj.metadata.app_name
+
+                    # Add a orphan_name to only unallocated files
+                    if not obj.is_allocated() and obj.meta_type == 1:
+                        split = obj.filename.split("\\")
+                        obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
+                
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary
