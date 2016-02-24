@@ -4,12 +4,12 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/12/31
+Date:    2016/02/12
 
 Description:
 RegistryMatching.py is a Vestigium module to perform Windows Registry analysis.
 
-Copyright (c) 2015, Thomas Laurenson
+Copyright (c) 2016, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
@@ -141,9 +141,9 @@ class RegistryProcessing():
         self.timestamp = timestamp
 
         # Print banner for Registry processing
-        #print("\n\n----------------------------------------")
-        #print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
-        #print("----------------------------------------")
+        print("\n\n----------------------------------------")
+        print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
+        print("----------------------------------------")
         logging.info("\n----------------------------------------")
         logging.info(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
         logging.info("----------------------------------------")
@@ -202,15 +202,11 @@ class RegistryProcessing():
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
-                    # Normalise the CellObject properties
-                    # This is commented out, as apxml/APXMLPreProcess.py now performs normalisation
-                    # See: https://github.com/thomaslaurenson/apxml/blob/master/APXMLPreProcess.py
-
-                    """
+                    # Normalize the cell path
                     obj.cellpath_norm = cell_path_normalizer.normalize_profile_co(obj.cellpath)
                     rootkey = obj.cellpath_norm.split("\\")[0]
                     obj.cellpath_norm = cell_path_normalizer.normalize_target_co(obj.cellpath_norm, rootkey)
-
+                    obj.cellpath_norm = obj.cellpath_norm.lower()
                     # Normalize the basename
                     obj.basename_norm = None
                     if obj.basename and obj.basename.startswith("C:"):
@@ -219,10 +215,18 @@ class RegistryProcessing():
                         obj.basename_norm = normbasename
                         obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
 
-                    # Set the application name
-                    obj.app_name = apxml_obj.metadata.app_name
-                    """
+                    elif obj.basename and obj.basename.startswith("P:"):
+                        # Decrypt user assist entry and normalise
+                        normbasename = codecs.decode(obj.basename, "rot_13")
+                        if normbasename.startswith("C:"):
+                            normbasename = file_path_normalizer.normalize(obj.basename)
+                            normbasename = normbasename.replace('/', '\\')
+                            obj.basename_norm = normbasename
+                            obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
 
+                    # Set the application name
+                    obj.app_name = apxml_obj.metadata.app_name                
+                
                     # Add Profile CellObject (PCO) to:
                     # 1) PCO list
                     # 2) PCO dictionary
@@ -254,10 +258,7 @@ class RegistryProcessing():
 
     def parse_target(self):
         """ Parse target Registry hive files. """
-
-        # Print header to console
-        #print("\n>>> Processing target hives ...")
-
+        print("\n>>> Processing target hives ...")
         self.to_process = collections.defaultdict(list)
 
         # Fetch all Registry related files
@@ -299,7 +300,7 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-        #sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
+        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
 
         # Normalize the TCO rootkey
         if tco.cellpath is not None:
@@ -311,7 +312,7 @@ class RegistryProcessing():
                                                                           self.active_rootkey)
         else:
             tco.cellpath_norm == None
-                        
+
         # Normalize the basename
         tco.basename_norm = None
         if tco.basename and tco.basename.startswith("c:"):
@@ -334,9 +335,6 @@ class RegistryProcessing():
 
     def match_tco_pco(self, tco, pco):
         """ Match the Target CellObject (TCO) to Profile CellObjects (PCO). """
-        #if "truecrypt" in tco.cellpath_norm.lower():
-        #    print(tco.cellpath_norm)
-        #    print(pco.cellpath_norm)
         # Match Registry key (path, allocation)
         if tco.name_type == "k":
             if (match_cell_path(tco, pco) and
@@ -407,8 +405,6 @@ class RegistryProcessing():
 
     def results(self):
         """ Print overview of results to log file. """
-
-        # Log results overview
         logging.info("\n\n>>> Windows Registry Analysis Overview:")
         profile_states = [pco.app_state for pco in self.pcos]
         target_states = [tco.original_cellobject.app_state for tco in self.matches]
@@ -567,10 +563,8 @@ class RegistryProcessing():
 
     def regxml_report(self):
         """ Create a RegXML document with all matched Registry entries. """
-
         # Create a HiveObject to append matched cells
         hives = dict()
-
         # Determine source hive files where matches were found
         hive_filenames = {tco.active_hive for tco in self.matches}
 
@@ -635,13 +629,13 @@ if __name__=="__main__":
                         metavar = 'HIVES',
                         action = 'store',
                         help = "Directory of hive files previously extracted using hivexml")
-    parser.add_argument("-d",
-                        help = "Do not remove files ending with '/.' and '/..' \n(default is to remove these files)",
-                        action = "store_false",
-                        default = True)
     parser.add_argument("-t",
                         help = "Report all timestamps in Unix timestamp format \n(default timestamp format is ISO 8601)",
                         action="store_true")
+    parser.add_argument("-z",
+                        help = "Zap (delete) the output directory if it exists",
+                        action = "store_true",
+                        default = False)
 
     args = parser.parse_args()
 
@@ -653,7 +647,6 @@ if __name__=="__main__":
     hives_dir = args.hives
     ignore_dotdirs = args.d
     timestamp = args.t
-    zapdir = args.z
 
     ###################################
     # Perform Windows Registry analysis
@@ -668,3 +661,9 @@ if __name__=="__main__":
     reg.parse_target()
     reg.regxml_report()
     reg.results()
+
+    # Print overview of results
+    print("\n\n-----------------------")
+    print(">>> OVERVIEW OF RESULTS")
+    print("-----------------------")
+    reg.results_overview()
