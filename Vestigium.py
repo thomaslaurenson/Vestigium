@@ -4,19 +4,19 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2015/12/28
+Date:    2016/02/12
 
 Description:
-Vestigium is a proof of concept implementation of an application  profiling 
-framework. The framework automates the detection of file system  and Windows 
-Registry entries. All digital artifacts associated with an application are 
-represented and processing automated by using the standardised DFXML, RegXML 
-and APXML forensic data abstractions. 
+Vestigium is a proof of concept implementation of an application  profiling
+framework. The framework automates the detection of file system  and Windows
+Registry entries. All digital artifacts associated with an application are
+represented and processing automated by using the standardised DFXML, RegXML
+and APXML forensic data abstractions.
 Vestigium requires three inputs:
     1) Forensic image
     2) Output directory
     3) Application Profile XML (APXML) document(s)
-    
+
 USAGE EXAMPLE:
 python3.4 Vestigium.py ~/TDS/1-install.raw /
                        ~/TDS/1-install-output /
@@ -24,7 +24,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                        --dfxml ~/TDS/1-install.xml /
                        --hives ~/TDS/1-install/
 
-Copyright (c) 2015, Thomas Laurenson
+Copyright (c) 2016, Thomas Laurenson
 
 ###############################################################################
 This file is part of Vestigium.
@@ -58,7 +58,7 @@ import hashlib
 
 # Append needed library paths
 sys.path.append(r'src/')
-sys.path.append(r'dfxml/')    
+sys.path.append(r'dfxml/')
 sys.path.append(r'apxml/')
 
 try:
@@ -85,16 +85,16 @@ if sys.version_info <= (3,0):
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser(description='''
-Vestigium is a proof of concept implementation of an application  profiling 
-framework. The framework automates the detection of file system  and Windows 
-Registry entries. All digital artifacts associated with an application are 
-represented and processing automated by using the standardised DFXML, RegXML 
-and APXML forensic data abstractions. 
+Vestigium is a proof of concept implementation of an application  profiling
+framework. The framework automates the detection of file system  and Windows
+Registry entries. All digital artifacts associated with an application are
+represented and processing automated by using the standardised DFXML, RegXML
+and APXML forensic data abstractions.
 Vestigium requires three inputs:
     1) Forensic image
     2) Output directory
     3) Application Profile XML (APXML) document(s)
-    
+
 USAGE EXAMPLE:
 python3.4 Vestigium.py ~/TDS/1-install.raw /
                        ~/TDS/1-install-output /
@@ -182,10 +182,6 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     logging.info("    Timestamp:        %s" % timestamp)
     logging.info("    Zap Output (dir): %s" % zapdir)
 
-    #print("################################")
-    #print(">>> Target data set information:")
-    #print("  > %s" % imagefile)
-
     if (args.e == 'file'):
         fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
                                                xmlfile = xmlfile,
@@ -199,7 +195,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         fs.results()
         fs.results_overview()
         quit()
-        
+
     if (args.e == 'reg'):
         print(">>> %s" % imagefile)
         reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
@@ -211,12 +207,11 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         reg.process_apxmls()
         reg.parse_target()
         reg.regxml_report()
-        reg.results() 
-        reg.results_overview() 
-        
+        reg.results()
+        reg.results_overview()
+
         quit()
 
-    #"""
     ##############################
     # Perform file system analysis
     ##############################
@@ -227,14 +222,12 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                                                    profiles = profiles,
                                                    ignore_dotdirs = ignore_dotdirs,
                                                    timestamp = timestamp)
-    
+
     fs.process_apxmls()
     fs.process_target()
     fs.dfxml_report()
     fs.results()
-    
-    #"""
-    #quit()
+
     ###################################
     # Perform Windows Registry analysis
     ###################################
@@ -249,7 +242,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     reg.parse_target()
     reg.regxml_report()
     reg.results()
-    
+
     # Print overview of results
     print("\n\n-----------------------")
     print(">>> OVERVIEW OF RESULTS")
@@ -260,5 +253,5 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     # All done, log Vestigium elapsed run time
     elapsed = timeit.default_timer() - base_start_time
     logging.info("\n>>> TIMED: Total time elapsed:    %s" % elapsed)
-    
+
     print("\n\n>>> Finished.\n")

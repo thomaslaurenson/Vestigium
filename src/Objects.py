@@ -992,10 +992,7 @@ class ByteRun(object):
       "fill",
       "len",
       "type",
-      "uncompressed_len",
-      "sha1",  # TL: Added sha1 property
-      "md5", # TL: Added md5 property
-      "entropy" # TL: Added entropy property
+      "uncompressed_len"
     ])
 
     def __init__(self, *args, **kwargs):
@@ -1083,74 +1080,21 @@ class ByteRun(object):
             if prop not in _warned_byterun_attribs:
                 _warned_byterun_attribs.add(prop)
                 _logger.warning("No instructions present for processing this attribute found on a byte run: %r." % prop)
-        # TL: Quick fix to read in block hashes for analysis
-        # Need to revisit in future for better error checking
-        for ce in e.findall("./*"):
-            (cns, ctn) = _qsplit(ce.tag)        
-            if ctn == "hashdigest":
-                setattr(self, "type", ce.attrib["type"])
-                if ce.attrib["type"] == "md5" or ce.attrib["type"] == "MD5":
-                    setattr(self, "md5", ce.text)
-                elif ce.attrib["type"] == "sha1":
-                    setattr(self, "md5", ce.text)
-            
+
     def to_Element(self):
         outel = ET.Element("byte_run")
-
-        # TL: Added support to append a child hashdigest element
-        def _append_hash(name, value):
-            if not value is None or name in diffs_whittle_set:
-                tmpel = ET.Element("hashdigest")
-                tmpel.attrib["type"] = name
-                if not value is None:
-                    tmpel.text = value
-                #_anno_hash(tmpel) # TL: Not anticipating annotated hashes, so removed
-                outel.append(tmpel)
-
         for prop in ByteRun._all_properties:
             val = getattr(self, prop)
             #Skip null properties
             if val is None:
                 continue
-            # TL: Added support to populate a child hashdigest element
-            if prop == "md5":
-                _append_hash("MD5", self.md5)
-                continue               
-            elif prop in ["md5", "MD5", "sha1", "SHA1", "type"]:
-                continue
-            elif isinstance(val, bytes):
+
+            if isinstance(val, bytes):
                 outel.attrib[prop] = str(struct.unpack("b", val)[0])
             else:
                 outel.attrib[prop] = str(val)
 
         return outel
-
-    # TL: Added sha1 property setter and getter
-    @property
-    def sha1(self):
-        return self._sha1
-
-    @sha1.setter
-    def sha1(self, val):
-        self._sha1 = _strcast(val)
-        
-    # TL: Added md5 property setter and getter        
-    @property
-    def md5(self):
-        return self._md5
-
-    @md5.setter
-    def md5(self, val):
-        self._md5 = _strcast(val)
-        
-    # TL: Added entropy property setter and getter        
-    @property
-    def entropy(self):
-        return self._entropy
-
-    @entropy.setter
-    def entropy(self, val):
-        self._entropy = _strcast(val)                
 
     @property
     def file_offset(self):
@@ -1749,49 +1693,28 @@ class FileObject(object):
     def compare_to_original(self):
         self._diffs = self.compare_to_other(self.original_fileobject, True)
 
-    def compare_to_other(self, other, ignore_original=False, ignore_properties=set(), check_properties=set()):
+    def compare_to_other(self, other, ignore_original=False, ignore_properties=set()):
         _typecheck(other, FileObject)
 
         diffs = set()
-        
-        # TL: Added support to specify a set of poperties to compare
-        if check_properties:
-            print("HERE")
-            for propname in check_properties:
-                if propname in FileObject._incomparable_properties:
-                    continue
-                if ignore_original and propname == "original_fileobject":
-                    continue
-                # TL: Added ignore_properties check
-                # Can pass a set() of properties to ignore
-                # e.g., {"filename", "sha1"}
-                if propname in ignore_properties:
-                    continue
-                oval = getattr(other, propname)
-                sval = getattr(self, propname)
-                if oval is None and sval is None:
-                    continue
-                if oval != sval:
-                    #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
-                    diffs.add(propname)
-        else:        
-            for propname in FileObject._all_properties:
-                if propname in FileObject._incomparable_properties:
-                    continue
-                if ignore_original and propname == "original_fileobject":
-                    continue
-                # TL: Added ignore_properties check
-                # Can pass a set() of properties to ignore
-                # e.g., {"filename", "sha1"}
-                if propname in ignore_properties:
-                    continue
-                oval = getattr(other, propname)
-                sval = getattr(self, propname)
-                if oval is None and sval is None:
-                    continue
-                if oval != sval:
-                    #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
-                    diffs.add(propname)
+
+        for propname in FileObject._all_properties:
+            if propname in FileObject._incomparable_properties:
+                continue
+            if ignore_original and propname == "original_fileobject":
+                continue
+            # TL: Added ignore_properties check
+            # Can pass a set() of properties to ignore
+            # e.g., {"filename", "sha1"}
+            if propname in ignore_properties:
+                continue
+            oval = getattr(other, propname)
+            sval = getattr(self, propname)
+            if oval is None and sval is None:
+                continue
+            if oval != sval:
+                #_logger.debug("propname, oval, sval: %r, %r, %r" % (propname, oval, sval))
+                diffs.add(propname)
 
         return diffs
 
@@ -2666,7 +2589,7 @@ class CellObject(object):
       "cellpath_norm", # TL: Added cellpath_norm property
       "data",
       "data_conversions",
-      "data_encoding", # TL: Added data_encoding element
+      "data_encoding",
       "data_raw", # TL: Added data_raw element
       "data_type",
       "error",
@@ -3113,21 +3036,17 @@ class CellObject(object):
         elif val == "RegLink": val = "REG_LINK"
         elif val == "RegMultiSz": val = "REG_MULTI_SZ"
         elif val == "RegResourceList": val = "REG_RESOURCE_LIST"
-        elif val == "RegFullResourceDescription": val = "REG_FULL_RESOURCE_DESCRIPTOR"
         elif val == "RegResourceRequirementsList": val = "REG_RESOURCE_REQUIREMENTS_LIST"
         elif val == "RegQword": val = "REG_QWORD"
         # TL: Added RegFileTime, represent as BINARY
         elif val == "RegFileTime": val = "REG_BINARY"
-        # TL: Added 14 + 12, represented as BINARY
-        elif val == "14": val = "REG_BINARY"
-        elif val == "12": val = "REG_BINARY"
         # Not 100% sure about the Registry library type of RegUnknown
         # Lets set it to no type, just to be safe
         elif val == "RegUnknown": val = "REG_NONE"
         # TL: Some recovered cells have incorrect data_type
         # If the data_type is an integer, set it to binary
-        #else:
-        #    val = "REG_BINARY"
+        else:
+            val = "REG_BINARY"
 
         if not val in [
           None,
