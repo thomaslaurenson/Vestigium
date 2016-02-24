@@ -180,6 +180,19 @@ class APXMLObject(object):
         else:
             raise TypeError("Type Error: %r." % type(value))
 
+    def remove(self, obj):
+        """ Remove FileObject or CellObject from APXMLObject list(s). """
+        if isinstance(obj, Objects.FileObject):
+            for fo in self._files:
+                if fo == obj:
+                    self._files.remove(fo)
+        elif isinstance(obj, Objects.CellObject):
+            for co in self._cells:
+                if co == obj:
+                    self._files.remove(co)
+        else:
+            raise TypeError("Type Error: %r." % type(obj))                          
+
     def to_Element(self):
         """ Convert an APXMLObject to ElementTree Object. """
         outel = ET.Element("apxml")
@@ -540,14 +553,12 @@ def generate_stats(apxml_obj):
             # Process Registry key
             if obj.name_type == "k":
                 apxml_obj.stats.keys += 1
-                apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
                     apxml_obj.stats._keys[obj.app_state].append(delta)
 
             # Process Registry value
             elif obj.name_type == "v":
                 apxml_obj.stats.values += 1
-                apxml_obj.stats.dirs += 1
                 for delta in obj.annos:
                     apxml_obj.stats._values[obj.app_state].append(delta)
 

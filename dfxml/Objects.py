@@ -3390,7 +3390,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
 
 def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     """
-    Generator.  Yields a stream of populated DFXMLObjects, VolumeObjects and FileObjects, paired with an event type ("start" or "end").  The DFXMLObject and VolumeObjects do NOT have their child lists populated with this method - that is left to the calling program.
+    Generator.  Yields a stream of populated HiveObjects and CellObjects, paired with an event type ("start" or "end").  The RegXMLObject do NOT have their child lists populated with this method - that is left to the calling program.
 
     The event type interface is meant to match the interface of ElementTree's iterparse; this is simply for familiarity's sake.  DFXMLObjects and VolumeObjects are yielded with "start" when the stream of VolumeObject or FileObjects begins - that is, they are yielded after being fully constructed up to the potentially-lengthy child object stream.  FileObjects are yielded only with "end".
 
@@ -3400,16 +3400,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     @param fiwalk: Optional.  Path to a particular fiwalk build you want to run.
     """
 
-    #The DFXML stream file handle.
-    #fh = None
-    #subp = None
-    #fiwalk_path = kwargs.get("fiwalk", "fiwalk")
-    #subp_command = [fiwalk_path, "-x", filename]
-#    if filename.endswith("xml"):
-#        fh = open(filename, "rb")
-#    else:
-#        subp = subprocess.Popen(subp_command, stdout=subprocess.PIPE)
-#        fh = subp.stdout
+    #The RegXML stream file handle.
     fh = open(filename, "rb")
     _events = set()
     for e in events:
@@ -3417,19 +3408,13 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
             raise ValueError("Unexpected event type: %r.  Expecting 'start', 'end'." % e)
         _events.add(e)
 
-    dobj = kwargs.get("dfxmlobject", DFXMLObject())
     robj = kwargs.get("regxmlobject", RegXMLObject())
     hobj = kwargs.get("hiveobject", HiveObject())
     cobj = kwargs.get("cellobject", CellObject())
 
-    #The only way to efficiently populate VolumeObjects is to populate the object when the stream has hit its first FileObject.
-    vobj = None
-
     #It doesn't seem ElementTree allows fetching parents of Elements that are incomplete (just hit the "start" event).  So, build a volume Element when we've hit "<volume ... >", glomming all elements until the first fileobject is hit.
     #Likewise with the Element for the DFXMLObject.
-    dfxml_proxy = None
     regxml_proxy = None
-    volume_proxy = None
     hive_proxy = None
     msregistry_proxy = None
 
@@ -3449,7 +3434,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
 
         #Track namespaces
         if ETevent == "start-ns":
-            dobj.add_namespace(*elem)
+            robj.add_namespace(*elem)
             ET.register_namespace(*elem)
             continue
 
@@ -3460,18 +3445,12 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
 
         if ETevent == "start":
             if ln == "msregistry" or ln == "hive":
-                if _state != READING_START:
-                    raise ValueError("Encountered a <msregistry> element, but the parser isn't in its start state.  Recursive <msregistry> declarations aren't supported at this time.")
+#                if _state != READING_START:
+#                    raise ValueError("Encountered a <msregistry> element, but the parser isn't in its start state.  Recursive <msregistry> declarations aren't supported at this time.")
                 hive_proxy = ET.Element(elem.tag)
                 for k in elem.attrib:
                     hive_proxy.attrib[k] = elem.attrib[k]
                 _state = READING_PRESTREAM
-            # elif ln == "cellobject":
-                # if _state == READING_PRESTREAM:
-                    # cobj.populate_from_Element(hive_proxy)
-                    # if "start" in _events:
-                        # yield ("start", cobj)
-                # _state = READING_FILES
 
         elif ETevent == "end":
             if ln == "cellobject":
@@ -3496,12 +3475,6 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
                     #This is a direct child of the DFXML document property; glom onto the proxy.
                     if regxml_proxy is not None:
                         regxml_proxy.append(elem)
-
-
-
-
-
-
 
 def parse(filename):
     """Returns a DFXMLObject populated from the contents of the (string) filename argument."""
