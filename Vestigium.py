@@ -186,14 +186,14 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     # Create output folder (with error checking)
     if os.path.exists(outputdir) and os.path.isdir(outputdir):
         if zapdir:
-            print('  > Error: The specified output directory already exists...')
+            print('\n  > Error: The specified output directory already exists...')
             print('    %s' % outputdir)
             delete = input('  > Delete the existing directory? ([Y] or N): ')
             if delete.lower() == 'y' or delete.lower() == 'yes':
                 shutil.rmtree(outputdir)
                 os.makedirs(outputdir)
         else:
-            print('  > Error: The specified output directory already exists...')
+            print('\n  > Error: The specified output directory already exists...')
             print('    %s' % outputdir)
             print('    Quitting...')
             quit()

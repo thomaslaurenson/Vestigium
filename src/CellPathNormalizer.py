@@ -70,26 +70,25 @@ class CellPathNormalizer():
         Before: CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}\ControlSet001\
         After:  SYSTEM\ControlSet001\
         """
+        # Normalise hive rootkey, or return if None
         if cellpath:
             normpath = cellpath.split("\\")
             normpath[0] = rootkey
             normpath = "\\".join(normpath)
             return normpath
+        else:
+            return cellpath
 
     def normalize_target_co(self, cellpath, rootkey):
         """ Normalize the cellpath of the Target CellObject (TCO). """
+        
+        # Split a cellpath on backslashes, or return if None
         if cellpath:
             normpath = cellpath.split("\\")
         else:
             return cellpath
 
-        # LiveDiff reports user SID in results, but CellXML-Registry does not
-        # Therefore, commented code
-        #if rootkey == "NTUSER.DAT":
-        #    if len(normpath) >= 2:
-        #        normpath[1] = "%SID%"
-
-        # Normalise SYSTEM Registry hive cellpath
+        # System hive normalisation
         if rootkey == "system":
             control_names = ["controlset001",
                              "controlset002",
@@ -103,6 +102,7 @@ class CellPathNormalizer():
                 if normpath[1] in control_names:
                     normpath[1] = "%controlset%"
 
+        # Join the split normalised path and return
         normpath = "\\".join(normpath)
         return normpath
 

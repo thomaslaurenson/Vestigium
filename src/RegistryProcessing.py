@@ -129,7 +129,7 @@ def match_data(tco, pco):
         against the profile cellobject (pco). """
     return tco.data == pco.data_raw
 
-################################################################################
+###############################################################################
 class RegistryProcessing():
     def __init__(self, imagefile=None, xmlfile=None, outputdir=None, profiles=None, hives_dir=None, timestamp=False):
         """ Initialize RegistryMatching object. """
@@ -141,7 +141,7 @@ class RegistryProcessing():
         self.timestamp = timestamp
 
         # Print banner for Registry processing
-        print("\n\n----------------------------------------")
+        print("\n----------------------------------------")
         print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
         print("----------------------------------------")
         logging.info("\n----------------------------------------")
@@ -154,7 +154,6 @@ class RegistryProcessing():
         # A dictionary is generated: state => list of fileobjects.
         # For example: "install" => [cellobject, cellobject] """
         self.pcos_dict = collections.defaultdict(list)
-
         self.pcos_keys = collections.defaultdict(list)
         self.pcos_values = collections.defaultdict(list)
 
@@ -187,21 +186,23 @@ class RegistryProcessing():
         # active_rootkey is the common root key name (SOFTWARE, SYSTEM, NTUSER.DAT)
         self.active_rootkey = None
 
+    ###########################################################################
     def process_apxmls(self):
         """
         Method to parse the RegXML CellObjects from the
         Application Profile XML structure.
         """
-        #print(">>> Processing application profiles ...")
+        print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            #print("  > Processing: %s" % os.path.basename(profile))
+            print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pco in apxml_obj:
                 if isinstance(pco, Objects.CellObject):
+                    # Profile normalisation is commented as APXMLPreProcess.py does this
                     """
                     # Normalize the cell path
                     obj.cellpath_norm = cell_path_normalizer.normalize_profile_co(obj.cellpath)
@@ -258,9 +259,10 @@ class RegistryProcessing():
         for rootkey in self.target_hives:
             logging.info("  > %s" % rootkey)
 
+    ###########################################################################
     def parse_target(self):
         """ Parse target Registry hive files. """
-        print("\n>>> Processing target hives ...")
+        print(">>> Processing target hives ...")
         self.to_process = collections.defaultdict(list)
 
         # Fetch all Registry related files
@@ -280,12 +282,12 @@ class RegistryProcessing():
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         for rootkey in self.target_hives:
+            
             # Can exclude rootkeys during testing to speed up processing
             #if rootkey == "NTUSER.DAT" or rootkey == "SOFTWARE":
             #    continue
 
             for hive in self.to_process[rootkey]:
-                #print("  > %s" % os.path.basename(hive))
                 self.active_hive = hive
                 self.active_rootkey = rootkey
 
@@ -294,6 +296,7 @@ class RegistryProcessing():
                         obj.rootkey = rootkey
                         self.process_target_co(obj)
 
+    ###########################################################################
     def process_target_co(self, tco):
         """ Process each Target CellObject (TCO). """
 
@@ -302,42 +305,53 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-        sys.stdout.write("\r  > Keys: {0:6}  Values: {1:6}  Matches: {2:4}  Hive: {3:10}".format(self.target_key_count, self.target_value_count, self.matches_count, self.active_rootkey));
+            
+        # Print the current progress
+        sys.stdout.write(("\r  > Keys: {0:6}  Values: {1:6}"  
+                          " Matches: {2:4}  Hive: {3:10}").format(
+                         self.target_key_count, 
+                         self.target_value_count, 
+                         self.matches_count, 
+                         self.active_rootkey));
 
         # Normalize the TCO rootkey
         if tco.cellpath is not None:
+            # Normalise the TCO rootkey
             tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath.lower(),
-                                                                                  self.active_rootkey)
+                                                                                      self.active_rootkey)
 
             # Normlaize the TCO cell path (full path)
             tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm,
-                                                                          self.active_rootkey)
+                                                                              self.active_rootkey)
         else:
             tco.cellpath_norm == None
-        
-#        if tco.cellpath_norm and 'truecrypt' in tco.cellpath_norm:
-#            print("\n%s\n" % tco.cellpath_norm)
 
         # Normalize the basename
         tco.basename_norm = None
         if tco.basename and tco.basename.startswith("c:"):
+            # Use file path normaliser to transform the basename
             normbasename = self.file_path_normalizer.normalize(tco.basename)
+            # Replace blackslashes with forwardslashes (for consistency)
             normbasename = normbasename.replace('/', '\\')
             tco.basename_norm = normbasename
             if tco.cellpath_norm:
+                # Finally update the cellpath_norm for a basename transformation
                 tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename,
                                                               tco.basename_norm)
-        #print(tco.cellpath_norm)
+                                                              
+        # MATCH KEYS
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
                 for pco in self.pcos_keys[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
 
+        # MATCH VALUE
         if tco.name_type == 'v':
             if tco.cellpath_norm in self.pcos_values:
                 for pco in self.pcos_values[tco.cellpath_norm]:
                     self.match_tco_pco(tco, pco)
 
+    ###########################################################################
     def match_tco_pco(self, tco, pco):
         """ Match the Target CellObject (TCO) to Profile CellObjects (PCO). """
         # Match Registry key (path, allocation)
@@ -363,7 +377,7 @@ class RegistryProcessing():
 
         # Match Registry value
         elif tco.name_type == "v":
-            #print("\n", match_data_type(tco, pco), tco.data_type, pco.data_type)
+
             # Hard match: path, data type, actual data, allocation
             if (match_cell_path(tco, pco) and
                 match_data_type(tco, pco) and
@@ -409,6 +423,7 @@ class RegistryProcessing():
                 self.matches_count += 1
                 return
 
+    ###########################################################################
     def results(self):
         """ Print overview of results to log file. """
         logging.info("\n\n>>> Windows Registry Analysis Overview:")
@@ -505,7 +520,7 @@ class RegistryProcessing():
                                                    total_clo,
                                                    total_uni))
 
-
+    ###########################################################################
     def results_overview(self):
         """ Print overview of results to console. """
 
@@ -567,6 +582,7 @@ class RegistryProcessing():
                                                    total_clo,
                                                    total_uni))
 
+    ###########################################################################
     def regxml_report(self):
         """ Create a RegXML document with all matched Registry entries. """
         # Create a HiveObject to append matched cells
