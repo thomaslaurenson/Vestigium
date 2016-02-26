@@ -181,6 +181,7 @@ class FileSystemProcessing():
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
                 if isinstance(pfo, Objects.FileObject):
+                    """
                     # Add basename to FileObject
                     basename = obj.filename.split("\\")
                     obj.basename = basename[len(basename) - 1]
@@ -203,7 +204,8 @@ class FileSystemProcessing():
                     if not obj.is_allocated() and obj.meta_type == 1:
                         split = obj.filename.split("\\")
                         obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
-                
+                    """
+                    
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary

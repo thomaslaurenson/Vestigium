@@ -88,18 +88,18 @@ class CellPathNormalizer():
         #        normpath[1] = "%SID%"
 
         # Normalise SYSTEM Registry hive cellpath
-        if rootkey == "SYSTEM":
-            control_names = ["ControlSet001",
-                             "ControlSet002",
-                             "ControlSet003",
-                             "CurrentControlSet",
-                             "Clone"]
+        if rootkey == "system":
+            control_names = ["controlset001",
+                             "controlset002",
+                             "controlset003",
+                             "currentcontrolset",
+                             "clone"]
             # If path has "control set" name, normalise target path
             # See: http://support.microsoft.com/kb/100010
             #for name in control_names:
             if len(normpath) >= 2:
                 if normpath[1] in control_names:
-                    normpath[1] = "%CONTROLSET%"
+                    normpath[1] = "%controlset%"
 
         normpath = "\\".join(normpath)
         return normpath
