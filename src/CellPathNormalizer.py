@@ -83,6 +83,8 @@ class CellPathNormalizer():
         else:
             return cellpath
 
+        # LiveDiff reports user SID in results, but CellXML-Registry does not
+        # Therefore, commented code
         #if rootkey == "NTUSER.DAT":
         #    if len(normpath) >= 2:
         #        normpath[1] = "%SID%"

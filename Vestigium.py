@@ -55,6 +55,8 @@ import glob
 import logging
 import datetime
 import hashlib
+import subprocess
+import platform
 
 # Append needed library paths
 sys.path.append(r'src/')
@@ -79,6 +81,17 @@ except ImportError:
 
 if sys.version_info <= (3,0):
     raise RuntimeError("Vestigium.py requires Python 3.0 or above")
+
+################################################################################
+# Helper Methods
+def check_program(name):
+    try:
+        devnull = open(os.devnull)
+        subprocess.Popen([name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).communicate()
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            return False
+    return True
 
 ################################################################################
 ################################################################################
@@ -134,6 +147,29 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
 
     args = parser.parse_args()
 
+    # Operating system check with tool dependency check
+    if platform.system() == "Windows":
+        if not check_program("fiwalk-0.6.3.exe"):
+            print('Error: Vestigium.py')
+            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
+            print('       Download: http://digitalcorpora.org/downloads/fiwalk/fiwalk-0.6.3.exe')
+            print('       Now Exiting...')
+            sys.exit(1)
+        if not check_program("CellXML-Registry-1.2.0.exe"):
+            print('Error: Vestigium.py')
+            print('       The Vestigium.py module requires the CellXML-Registry tool.')
+            print('       Download: https://github.com/thomaslaurenson/CellXML-Registry')
+            print('       Now Exiting...')
+            sys.exit(1)    
+                                
+    elif platform.system() == "Linux":
+        if not check_program("fiwalk"):
+            print('Error: Vestigium.py')
+            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
+            print('       Download: https://github.com/sleuthkit/sleuthkit')
+            print('       Now Exiting...')
+            sys.exit(1)
+            
     # Start Vestigium timer
     base_start_time = timeit.default_timer()
 
@@ -191,6 +227,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                                                timestamp = timestamp)
         fs.process_apxmls()
         fs.process_target()
+        fs.dfxml_report_hives()
         fs.dfxml_report()
         fs.results()
         fs.results_overview()
@@ -224,7 +261,8 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                                                    timestamp = timestamp)
 
     fs.process_apxmls()
-    fs.process_target()
+    hives = fs.process_target()
+    fs.dfxml_report_hives()
     fs.dfxml_report()
     fs.results()
 

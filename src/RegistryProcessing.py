@@ -596,7 +596,7 @@ class RegistryProcessing():
             regxml.append(hives[hive_filename])
 
         # Make a RegXML document
-        report_name = self.outputdir + "/RegistryMatching.reg.xml"
+        report_name = self.outputdir + "/RegistryMatching.xml"
         logging.info("\n>>> RegXML REPORT: %s" % report_name)
 
         # Python 2 portability problem. If using Python 2, decode the to_regxml()

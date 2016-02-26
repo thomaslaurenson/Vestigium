@@ -38,6 +38,7 @@ import platform
 import datetime
 import timeit
 import io
+import hashlib
 import xml.dom.minidom
 import collections
 
@@ -78,6 +79,20 @@ except ImportError:
     sys.exit(1)
 
 ################################################################################
+# Global hive file name variables
+hive_names = ['ntuser.dat',
+              'repair/sam',
+              'repair/security',
+              'repair/software',
+              'repair/system',
+              'system32/config/sam',
+              'system32/config/security',
+              'system32/config/software',
+              'system32/config/system',
+              'system32/config/components',
+              'local settings/application data/microsoft/windows/usrclass.dat']
+
+################################################################################
 # Helper methods
 def sha1_file(fi):
     """ Helper method to calculate SHA-1 hash value of a file. """
@@ -95,6 +110,23 @@ def ptime(self, t):
         return str(t.timestamp())
     else:
         return str(t.iso8601())
+        
+def match_dir(tfo, pfo):
+    """ Match a directory artifact. """
+    return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
+
+def match_file(tfo, pfo):
+    """ Match a data file artifact. """
+    if (match_filename_norm(tfo, pfo) and
+        match_hash(tfo,pfo) and
+        match_size(tfo, pfo) and
+        match_allocation(tfo, pfo)):
+        return 2
+    elif (match_filename_norm(tfo, pfo) and
+          match_allocation(tfo, pfo)):
+        return 1
+    else:
+        return 0        
 
 def match_filename_norm(tfo, pfo):
     """ Compare fullpath of target fileobejct to profile filobject. """
@@ -115,6 +147,14 @@ def match_basename(tfo, pfo):
 def match_allocation(tfo, pfo):
     """ Compare the allocation of the target fileobejct to profile filobject. """
     return tfo.is_allocated() == pfo.is_allocated()
+
+def sha1_file(tfo):
+    """ Helper method to calculate SHA-1 hash of extracted hive file. """
+    hasher = hashlib.sha1()
+    with open(tfo, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+    return hasher.hexdigest()
 
 ################################################################################
 class FileSystemProcessing():
@@ -163,6 +203,9 @@ class FileSystemProcessing():
 
         # Create a list for FileObjects matches
         self.matches = list()
+        
+        # Create a list of extracted hives
+        self.hives = list()
 
         # Counter for target FileObjects to display progress
         self.target_file_count = 0
@@ -176,7 +219,7 @@ class FileSystemProcessing():
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("  > Processing: %s" % os.path.basename(profile))
+            print("\n  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
@@ -222,6 +265,55 @@ class FileSystemProcessing():
                     # Log all profile entries (Application, State, Path)
                     logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name, pfo.app_state, pfo.filename_norm))
 
+    def dfxml_report_hives(self):
+        """ Generate a DFXML report of extracted hive files. """
+        dc = {"name" : os.path.basename(__file__),
+              "type" : "Hash List",
+              "date" : datetime.datetime.now().isoformat(),
+              "os_sysname" : platform.system(),
+              "os_sysname" : platform.system(),
+              "os_release" : platform.release(),
+              "os_version" : platform.version(),
+              "os_host" : platform.node(),
+              "os_arch" : platform.machine()}
+        dfxml = Objects.DFXMLObject(command_line = " ".join(sys.argv),
+                                    sources = [self.imagefile],
+                                    dc = dc,
+                                    files = self.hives)
+        # Write a temp DFXML file, format it, then write to logfile
+        temp_fi = io.StringIO(dfxml.to_dfxml())
+        xml_fi = xml.dom.minidom.parse(temp_fi)
+        report_fn = "ExtractedHiveFiles.xml"
+        report_fn = os.path.join(self.outputdir, report_fn)
+        logging.info("\n>>> DFXML Report for extracted Registry hives: %s\n" % report_fn)
+        with open(report_fn, 'w') as f:
+            f.write(xml_fi.toprettyxml(indent="  "))
+
+    def extract_hive(self, tfo):
+        """ Extract a Windows Registry hive file from target data set. """
+        out_fn = tfo.filename
+        out_fn = out_fn.replace('/','-').replace(' ','-')
+        out_dir = self.outputdir + "/hives/"
+        out_path = os.path.join(out_dir, out_fn)
+        
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        
+        # Open output file and write file contents
+        with open(out_path, 'wb') as f:
+            contents = tfo.byte_runs.iter_contents(self.imagefile)
+            contents = b"".join(contents)
+            f.write(contents)
+        f.close()
+        
+        # Check the SHA-1 of fileobject VS extracted hive
+        if tfo.sha1 is not None:
+            sha1 = sha1_file(out_path)
+            if sha1 != tfo.sha1:
+                print("    Warning: SHA-1 hash mismatch for: %s" % os.path.basename(out_path))
+                
+        # Add extracted hive file to 'hives' list
+        self.hives.append(tfo)
 
     def process_target(self):
         """ Parse the file system of the target data set. """
@@ -251,7 +343,9 @@ class FileSystemProcessing():
             fn = self.outputdir + "/" + basename + ".xml"
             with open(fn, "w", encoding="utf-8") as f:
                 f.write(dfxml_report)
-
+           
+        # Return the list of extracted hive files (even if none extracted)     
+        return self.hives
 
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
@@ -261,6 +355,12 @@ class FileSystemProcessing():
         elif tfo.meta_type == 1:
             self.target_file_count += 1
         sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
+
+        # Extract hive file if found
+        for hive_name in hive_names:
+            fn = tfo.filename.lower()
+            if fn.endswith(hive_name) and tfo.is_allocated():
+                self.extract_hive(tfo)
 
         # Check if file is to be generically excluded
         if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
@@ -280,7 +380,7 @@ class FileSystemProcessing():
             # Match file system directories
             if tfo.meta_type == 2:
                 for pfo in self.pfos_dict[tfo.filename_norm]:
-                    if self.match_dir(tfo, pfo):
+                    if match_dir(tfo, pfo):
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
@@ -292,7 +392,7 @@ class FileSystemProcessing():
             # Match file system data files
             elif tfo.meta_type == 1:
                 for pfo in self.pfos_dict[tfo.filename_norm]:
-                    rank = self.match_file(tfo, pfo)
+                    rank = match_file(tfo, pfo)
                     if rank == 1:
                         tfo.annos = {"matched_soft"}
                         tfo.original_fileobject = pfo
@@ -340,24 +440,6 @@ class FileSystemProcessing():
                         logging.info("  > FILE SHA1: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
 
-
-    def match_dir(self, tfo, pfo):
-        """ Match a directory artifact. """
-        return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
-
-    def match_file(self, tfo, pfo):
-        """ Match a data file artifact. """
-        if (match_filename_norm(tfo, pfo) and
-            match_hash(tfo,pfo) and
-            match_size(tfo, pfo) and
-            match_allocation(tfo, pfo)):
-            return 2
-        elif (match_filename_norm(tfo, pfo) and
-              match_allocation(tfo, pfo)):
-            return 1
-        else:
-            return 0
-
     def results(self):
         """ Print overview of results to log file. """
         logging.info("\n>>> File System Analysis Overview:")
@@ -399,8 +481,7 @@ class FileSystemProcessing():
 
     def results_overview(self):
         """ Print overview of results to console. """
-        #print("\n>>> File System Analysis Overview:")
-        print(">>> %s" % self.imagefile)
+        print("\n>>> File System Analysis Overview:")
         profile_states = [pfo.app_state for pfo in self.pfos]
         target_states = [tfo.original_fileobject.app_state for tfo in self.matches]
         for state in set(profile_states):
@@ -441,7 +522,7 @@ class FileSystemProcessing():
             dfxml.append(tfo)
 
         # Make a DFXML file, and format using xmllint
-        self.dfxml_report = self.outputdir + "/FileSystemMatching.df.xml"
+        self.dfxml_report = self.outputdir + "/FileSystemMatching.xml"
         logging.info("\n>>> DFXML REPORT: %s" % self.dfxml_report)
 
         # Another Python 2 portability problem. If using Python 2, decode
