@@ -284,8 +284,8 @@ class RegistryProcessing():
         for rootkey in self.target_hives:
             
             # Can exclude rootkeys during testing to speed up processing
-            #if rootkey == "NTUSER.DAT" or rootkey == "SOFTWARE":
-            #    continue
+#            if rootkey == "system" or rootkey == "software":
+#                continue
 
             for hive in self.to_process[rootkey]:
                 self.active_hive = hive
@@ -317,28 +317,34 @@ class RegistryProcessing():
         # Normalize the TCO rootkey
         if tco.cellpath is not None:
             # Normalise the TCO rootkey
-            tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co_rootkey(tco.cellpath.lower(),
-                                                                                      self.active_rootkey)
+            tco.cellpath_norm = self.cell_path_normalizer.normalize_rootkey(tco.cellpath.lower(),
+                                                                            self.active_rootkey)
 
             # Normlaize the TCO cell path (full path)
-            tco.cellpath_norm = self.cell_path_normalizer.normalize_target_co(tco.cellpath_norm,
-                                                                              self.active_rootkey)
+            tco.cellpath_norm = self.cell_path_normalizer.normalize_cellpath(tco.cellpath_norm,
+                                                                             self.active_rootkey)
         else:
             tco.cellpath_norm == None
 
-        # Normalize the basename
+        # Normalize the TCO basename
         tco.basename_norm = None
-        if tco.basename and tco.basename.startswith("c:"):
-            # Use file path normaliser to transform the basename
-            normbasename = self.file_path_normalizer.normalize(tco.basename)
-            # Replace blackslashes with forwardslashes (for consistency)
-            normbasename = normbasename.replace('/', '\\')
-            tco.basename_norm = normbasename
-            if tco.cellpath_norm:
+        if tco.basename:
+            if (tco.basename.startswith("C:") or 
+                tco.basename.startswith("P:") or 
+                tco.basename.startswith("hrzr_ehacngu")):
+                
+                # Transform the basename (this ultimately calls file system path normaliser)
+                normbasename = self.cell_path_normalizer.normalize_basename(tco.basename)
+                
+                # Replace blackslashes with forwardslashes (for consistency)
+                normbasename = normbasename.replace('/', '\\')
+                tco.basename_norm = normbasename
+                
                 # Finally update the cellpath_norm for a basename transformation
-                tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename,
-                                                              tco.basename_norm)
-                                                              
+                if tco.cellpath_norm:
+                    tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename.lower(),
+                                                                  tco.basename_norm)
+                                                                          
         # MATCH KEYS
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
