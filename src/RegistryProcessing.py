@@ -265,20 +265,32 @@ class RegistryProcessing():
         print(">>> Processing target hives ...")
         self.to_process = collections.defaultdict(list)
 
-        # Fetch all Registry related files
-        registry_files = glob.glob(self.hives_dir + "*")
+        # Generate RegXML or fetch each needed target hive file
+        if self.hives_dir is not None:
+            # Fetch all Registry related files
+            registry_files = glob.glob(self.hives_dir + "*")
 
         # Classify required target hives and hive files
+        regxml_count = 0
         for fi in registry_files:
             for rootkey in self.target_hives:
                 if fi.lower().endswith(rootkey.lower() + ".xml"):
                     self.to_process[rootkey].append(fi)
+                    regxml_count += 1
+                    
+        # If no RegXML files were found, we need to generate RegXML
+        if regxml_count == 0:
+            for fi in registry_files:
+                if fi.lower.endswith(rootkey.lower()):
+                    # Generate RegXML
+                    pass
+                    # Command = CellXML-Registry-1.2.0.exe -r -f hivename
 
         logging.info("\n>>> Target Registry hive files:")
         for k in self.to_process:
             for v in self.to_process[k]:
                 logging.info("  > %s\t%s" % (k,v))
-
+                
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         for rootkey in self.target_hives:
