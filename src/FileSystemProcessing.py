@@ -134,9 +134,13 @@ def match_filename_norm(tfo, pfo):
     """ Compare fullpath of target fileobejct to profile filobject. """
     return tfo.filename_norm == pfo.filename_norm
 
-def match_hash(tfo, pfo):
+def match_hash_sha1(tfo, pfo):
     """ Compare SHA-1 hash of target fileobejct to profile filobject. """
     return tfo.sha1 == pfo.sha1
+    
+def match_hash(tfo, pfo):
+    """ Compare MD5 hash of target fileobejct to profile filobject. """
+    return tfo.md5 == pfo.md5    
 
 def match_size(tfo, pfo):
     """ Compare SHA-1 hash of target fileobejct to profile filobject. """
@@ -191,7 +195,7 @@ class FileSystemProcessing():
         self.pfos_filenames = set()
 
         # Dictionary to store SHA-1 hashes
-        # self.pfos_hashes = { sha1 : [FileObject1, FileObject2 ... }
+        # self.pfos_hashes = { md5 : [FileObject1, FileObject2 ... }
         self.pfos_hashes = collections.defaultdict(list)
 
         # Store the Target Data Set in a DFXML object
@@ -238,10 +242,6 @@ class FileSystemProcessing():
                     basename_norm = obj.filename_norm.split("/")
                     obj.basename_norm = basename_norm[len(basename_norm) - 1]
 
-                    # LiveDiff stores SHA-1 hashes in uppercase, convert to lower
-                    if obj.sha1 is not None:
-                        obj.sha1 = obj.sha1.lower()
-
                     # Set the application name
                     obj.app_name = apxml_obj.metadata.app_name
 
@@ -260,8 +260,8 @@ class FileSystemProcessing():
                     self.pfos.append(pfo)
                     self.pfos_dict[pfo.filename_norm].append(pfo)
                     self.pfos_filenames.add(pfo.filename_norm)
-                    if pfo.meta_type == 1 and pfo.sha1 is not None:
-                        self.pfos_hashes[pfo.sha1].append(pfo)
+                    if pfo.meta_type == 1 and pfo.md5 is not None:
+                        self.pfos_hashes[pfo.md5].append(pfo)
                     self.pfo_dfxml.append(pfo)
 
                     # Log all profile entries (Application, State, Path)
@@ -392,7 +392,7 @@ class FileSystemProcessing():
                         self.matches.append(tfo)
                         self.matches_count += 1
                         logging.info("  > DIRECTORY: %s\t%s" % (tfo.filename, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
 
             # Match file system data files
@@ -404,16 +404,16 @@ class FileSystemProcessing():
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         self.matches_count += 1
-                        logging.info("  > FILE SOFT: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
+                        logging.info("  > FILE SOFT: %s\t%s\t%s" % (tfo.filename, tfo.md5, tfo.is_allocated()))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
                     if rank == 2:
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         self.matches_count += 1
-                        logging.info("  > FILE HARD: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
+                        logging.info("  > FILE HARD: %s\t%s\t%s" % (tfo.filename, tfo.md5, tfo.is_allocated()))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
 
         # 2) Second check: Match orphaned directories and data files ($OrphanFiles)
@@ -430,21 +430,21 @@ class FileSystemProcessing():
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         self.matches_count += 1
-                        logging.info("  > FILE ORPH: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
+                        logging.info("  > FILE ORPH: %s\t%s\t%s" % (tfo.filename, tfo.md5, tfo.is_allocated()))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
                         return
 
         # 3) Third check: Perform a SHA-1 and basename check
-        elif tfo.sha1 in self.pfos_hashes:
+        elif tfo.md5 in self.pfos_hashes:
             if tfo.meta_type == 1:
-                for pfo in self.pfos_hashes[tfo.sha1]:
+                for pfo in self.pfos_hashes[tfo.md5]:
                     if tfo.alloc == pfo.is_allocated() and tfo.basename == pfo.basename:
                         tfo.annos = {"matched"}
                         tfo.original_fileobject = pfo
                         self.matches.append(tfo)
                         self.matches_count += 1
-                        logging.info("  > FILE SHA1: %s\t%s\t%s" % (tfo.filename, tfo.sha1, tfo.is_allocated()))
-                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.sha1, pfo.is_allocated(), pfo.app_name, pfo.app_state))
+                        logging.info("  > FILE MD5: %s\t%s\t%s" % (tfo.filename, tfo.md5, tfo.is_allocated()))
+                        logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
 
     def results(self):
         """ Print overview of results to log file. """
