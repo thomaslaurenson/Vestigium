@@ -283,8 +283,8 @@ class RegistryProcessing():
             for fi in registry_files:
                 if fi.lower.endswith(rootkey.lower()):
                     # Generate RegXML
-                    pass
-                    # Command = CellXML-Registry-1.2.0.exe -r -f hivename
+                    cmd = 'CellXML-Registry-1.2.0.exe -r -f ' + hivename
+                    os.system(cmd)
 
         logging.info("\n>>> Target Registry hive files:")
         for k in self.to_process:

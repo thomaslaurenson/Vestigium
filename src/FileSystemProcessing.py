@@ -92,6 +92,8 @@ hive_names = ['ntuser.dat',
               'system32/config/components',
               'local settings/application data/microsoft/windows/usrclass.dat']
 
+XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
+              
 ################################################################################
 # Helper methods
 def sha1_file(fi):
@@ -214,12 +216,12 @@ class FileSystemProcessing():
 
     def process_apxmls(self):
         """ Process Application Profiles (APXML documents). """
-        print(">>> Processing application profiles ...")
+        print("\n>>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
         for profile in self.profiles:
-            print("\n  > Processing: %s" % os.path.basename(profile))
+            print("  > Processing: %s" % os.path.basename(profile))
             apxml_obj = apxml.iterparse(profile)
             apxml.generate_stats(apxml_obj)
             for pfo in apxml_obj:
@@ -301,9 +303,10 @@ class FileSystemProcessing():
         
         # Open output file and write file contents
         with open(out_path, 'wb') as f:
-            contents = tfo.byte_runs.iter_contents(self.imagefile)
-            contents = b"".join(contents)
-            f.write(contents)
+            if tfo.byte_runs:
+                contents = tfo.byte_runs.iter_contents(self.imagefile)
+                contents = b"".join(contents)
+                f.write(contents)
         f.close()
         
         # Check the SHA-1 of fileobject VS extracted hive
@@ -337,9 +340,9 @@ class FileSystemProcessing():
                     self.process_target_fi(obj)
 
             # Save DFXML file: Format using minidom then write to file
+            print("\n  > Generating DFXML report of target file system...")
+            self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
             temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
-            with open("temp", "w", encoding="utf-8") as f:
-                f.write(xml_fi)	
             xml_fi = xml.dom.minidom.parse(temp_fi)		
             dfxml_report = xml_fi.toprettyxml(indent="  ")
             basename = os.path.splitext(os.path.basename(self.imagefile))[0]
@@ -510,7 +513,6 @@ class FileSystemProcessing():
                                     dc = dc)
 
         # Add XML Name Space for "delta" attribute
-        XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
         dfxml.add_namespace("delta", XMLNS_DELTA)
 
         # Add matched FileObjects to DFXMLObject
