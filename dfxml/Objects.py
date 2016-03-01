@@ -3254,12 +3254,16 @@ def iterparse(filename, events=("start","end"), **kwargs):
     @param dfxmlobject: A DFXMLObject document.  Optional.  A DFXMLObject is created and yielded in the object stream if this argument is not supplied.
     @param fiwalk: Optional.  Path to a particular fiwalk build you want to run.
     """
-
     #The DFXML stream file handle.
     fh = None
     subp = None
-    fiwalk_path = kwargs.get("fiwalk", "fiwalk")
-    subp_command = [fiwalk_path, "-x", filename]
+    
+    import platform
+    if platform.system() == "Windows":
+        fiwalk_path = kwargs.get("fiwalk-0.6.3.exe", "fiwalk-0.6.3.exe")
+    else:
+        fiwalk_path = kwargs.get("fiwalk", "fiwalk")
+    subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
     if filename.endswith("xml"):
         fh = open(filename, "rb")
     else:

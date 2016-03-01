@@ -310,7 +310,8 @@ class FileSystemProcessing():
         if tfo.sha1 is not None:
             sha1 = sha1_file(out_path)
             if sha1 != tfo.sha1:
-                print("    Warning: SHA-1 hash mismatch for: %s" % os.path.basename(out_path))
+                print("\n      Warning: SHA-1 hash mismatch for extracted hive file...")
+                print("      %s" % os.path.basename(out_path))
                 
         # Add extracted hive file to 'hives' list
         self.hives.append(tfo)
@@ -331,13 +332,15 @@ class FileSystemProcessing():
             for (event, obj) in Objects.iterparse(self.imagefile):
                 if isinstance(obj, Objects.FileObject):
                     # Append target FileObject to master dfxml container
-                    self.tds_dfxml.append(tfo)
+                    self.tds_dfxml.append(obj)
                     # Process the individual FileObject against target
                     self.process_target_fi(obj)
 
             # Save DFXML file: Format using minidom then write to file
             temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
-            xml_fi = xml.dom.minidom.parse(temp_fi)
+            with open("temp", "w", encoding="utf-8") as f:
+                f.write(xml_fi)	
+            xml_fi = xml.dom.minidom.parse(temp_fi)		
             dfxml_report = xml_fi.toprettyxml(indent="  ")
             basename = os.path.splitext(os.path.basename(self.imagefile))[0]
             fn = self.outputdir + "/" + basename + ".xml"
