@@ -141,9 +141,6 @@ class RegistryProcessing():
         self.timestamp = timestamp
 
         # Print banner for Registry processing
-        print("\n----------------------------------------")
-        print(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
-        print("----------------------------------------")
         logging.info("\n----------------------------------------")
         logging.info(">>> PERFORMING WINDOWS REGISTRY ANALYSIS")
         logging.info("----------------------------------------")
@@ -262,7 +259,7 @@ class RegistryProcessing():
     ###########################################################################
     def parse_target(self):
         """ Parse target Registry hive files. """
-        print(">>> Processing target hives ...")
+        print("\n>>> Processing target hives ...")
         self.to_process = collections.defaultdict(list)
 
         # Generate RegXML or fetch each needed target hive file
@@ -281,10 +278,28 @@ class RegistryProcessing():
         # If no RegXML files were found, we need to generate RegXML
         if regxml_count == 0:
             for fi in registry_files:
-                if fi.lower.endswith(rootkey.lower()):
-                    # Generate RegXML
-                    cmd = 'CellXML-Registry-1.2.0.exe -r -f ' + hivename
-                    os.system(cmd)
+                for rootkey in self.target_hives:
+                    if fi.lower().endswith(rootkey.lower()):
+                        # Generate RegXML
+                        import subprocess
+                        print("MEOW", fi)
+                        subp_command = ["CellXML-Registry-1.2.0.exe",
+                                        "-r",
+                                        "-f",
+                                        fi]
+                        print("CMD", subp_command)
+                        subprocess.call(subp_command)
+                        # try:
+                            # devnull = open(os.devnull)
+                            # subp_command = ["CellXML-Registry-1.2.0.exe",
+                                            # "-r",
+                                            # "-f",
+                                            # fi]
+                            # print(subp_command)
+                            # subprocess.Popen(subp_command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).communicate()
+                        # except OSError as e:
+                            # if e.errno == os.errno.ENOENT:
+                                # print("FUCKES")
 
         logging.info("\n>>> Target Registry hive files:")
         for k in self.to_process:

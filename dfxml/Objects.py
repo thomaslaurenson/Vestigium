@@ -1067,7 +1067,9 @@ class ByteRun(object):
 
         #Split into namespace and tagname
         (ns, tn) = _qsplit(e.tag)
-        assert tn == "byte_run"
+        
+        # TL: Added "run" to check (for fiwalk-0.6.3.exe)
+        assert (tn == "byte_run" or tn == "run")
 
         copied_attrib = copy.deepcopy(e.attrib)
 
@@ -1412,7 +1414,9 @@ class ByteRuns(object):
 
         #Split into namespace and tagname
         (ns, tn) = _qsplit(e.tag)
-        assert tn == "byte_runs"
+        
+        # TL: Added "byte runs" (with space) to check (for fiwalk-0.6.3.exe)
+        assert (tn == "byte_runs" or tn == "byte runs")
 
         if "facet" in e.attrib:
             self.facet = e.attrib["facet"]
@@ -1420,7 +1424,7 @@ class ByteRuns(object):
         #Look through direct-child elements to populate run array
         for ce in e.findall("./*"):
             (cns, ctn) = _qsplit(ce.tag)
-            if ctn == "byte_run":
+            if ctn == "byte_run" or ctn == "run":
                 nbr = ByteRun()
                 nbr.populate_from_Element(ce)
                 self.append(nbr)
@@ -1924,7 +1928,8 @@ class FileObject(object):
                     else:
                         self.diffs.add(ctn)
 
-            if ctn == "byte_runs":
+            # TL: Added "byte runs" to check (for old fiwalk-0.6.3.exe)
+            if ctn == "byte_runs" or ctn == "byte runs":
                 #byte_runs might be for file contents, the inode/MFT entry, or the directory entry naming the file.  Use the facet attribute to determine which.  If facet is absent, assume they're data byte runs.
                 if "facet" in ce.attrib:
                     if ce.attrib["facet"] not in FileObject._br_facet_to_property:
@@ -3263,6 +3268,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
         fiwalk_path = kwargs.get("fiwalk-0.6.3.exe", "fiwalk-0.6.3.exe")
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
+    #subp_command = [fiwalk_path, "-x", filename]
     subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
     if filename.endswith("xml"):
         fh = open(filename, "rb")

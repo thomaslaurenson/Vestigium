@@ -265,7 +265,9 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.dfxml_report_hives()
     fs.dfxml_report()
     fs.results()
-
+    
+    hives_dir = outputdir + "\\hives\\"
+    
     ###################################
     # Perform Windows Registry analysis
     ###################################
