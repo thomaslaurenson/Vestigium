@@ -1364,8 +1364,14 @@ class ByteRuns(object):
 
                 if run.img_offset is None:
                     raise AttributeError("Byte runs can't be extracted if missing a fill character and image offset.")
-
-                cmd = ["img_cat"]
+                
+                import platform
+                if platform.system() == "Windows":
+                    cwd = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep
+                    cmd = [cwd + "img_cat.exe"]
+                else:
+                    cmd = ["img_cat"]
+                
                 cmd.append("-b")
                 cmd.append(str(sector_size))
                 cmd.append("-s")
@@ -1373,7 +1379,11 @@ class ByteRuns(object):
                 cmd.append("-e")
                 cmd.append(str( (run.img_offset + run.len)//sector_size))
                 cmd.append(raw_image)
-                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr_fh)
+
+                if platform.system() == "Windows":
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr_fh, cwd=cwd)
+                else:
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr_fh)
 
                 #Do the buffered read
                 while len_to_read > 0:
@@ -3265,7 +3275,8 @@ def iterparse(filename, events=("start","end"), **kwargs):
     
     import platform
     if platform.system() == "Windows":
-        fiwalk_path = kwargs.get("fiwalk-0.6.3.exe", "fiwalk-0.6.3.exe")
+        fiwalk_loc = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
+        fiwalk_path = kwargs.get(fiwalk_loc, fiwalk_loc)
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
     #subp_command = [fiwalk_path, "-x", filename]

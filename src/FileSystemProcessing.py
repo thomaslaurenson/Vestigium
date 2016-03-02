@@ -303,7 +303,7 @@ class FileSystemProcessing():
         """ Extract a Windows Registry hive file from target data set. """
         out_fn = tfo.filename
         out_fn = out_fn.replace('/','-').replace(' ','-')
-        out_dir = self.outputdir + "/hives/"
+        out_dir = self.outputdir + os.sep + "hives" + os.sep
         out_path = os.path.join(out_dir, out_fn)
         
         if not os.path.exists(out_dir):
@@ -354,7 +354,7 @@ class FileSystemProcessing():
                     self.process_target_fi(obj)
 
             # Save DFXML file: Format using minidom then write to file
-            # print("\n  > Generating DFXML report of target file system...")
+            print("\n  > Generating DFXML report of target file system...")
             # self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
             # temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
             # xml_fi = xml.dom.minidom.parse(temp_fi)		
@@ -363,9 +363,6 @@ class FileSystemProcessing():
             # fn = self.outputdir + "/" + basename + ".xml"
             # with open(fn, "w", encoding="utf-8") as f:
                 # f.write(dfxml_report)
-           
-        # Return the list of extracted hive files (even if none extracted)     
-        return self.hives
 
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
@@ -541,7 +538,7 @@ class FileSystemProcessing():
             dfxml.append(tfo)
 
         # Make a DFXML file, and format using xmllint
-        self.dfxml_report = self.outputdir + "/FileSystemMatching.xml"
+        self.dfxml_report = self.outputdir + os.sep + "FileSystemMatching.xml"
         logging.info("\n>>> DFXML REPORT: %s" % self.dfxml_report)
 
         # Another Python 2 portability problem. If using Python 2, decode

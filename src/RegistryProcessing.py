@@ -283,7 +283,8 @@ class RegistryProcessing():
                         # Generate RegXML
                         import subprocess
                         devnull = open(os.devnull, 'w')
-                        subp_command = ["CellXML-Registry-1.2.0.exe",
+                        tool = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
+                        subp_command = [tool,
                                         "-r",
                                         "-f",
                                         fi]
@@ -642,7 +643,7 @@ class RegistryProcessing():
             regxml.append(hives[hive_filename])
 
         # Make a RegXML document
-        report_name = self.outputdir + "/RegistryMatching.xml"
+        report_name = self.outputdir + os.sep + "RegistryMatching.xml"
         logging.info("\n>>> RegXML REPORT: %s" % report_name)
 
         # Python 2 portability problem. If using Python 2, decode the to_regxml()

@@ -149,13 +149,15 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
 
     # Operating system check with tool dependency check
     if platform.system() == "Windows":
-        if not check_program("fiwalk-0.6.3.exe"):
+        fiwalk = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
+        if not check_program(fiwalk):
             print('Error: Vestigium.py')
             print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
             print('       Download: http://digitalcorpora.org/downloads/fiwalk/fiwalk-0.6.3.exe')
             print('       Now Exiting...')
             sys.exit(1)
-        if not check_program("CellXML-Registry-1.2.0.exe"):
+        cellxml = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
+        if not check_program(cellxml):
             print('Error: Vestigium.py')
             print('       The Vestigium.py module requires the CellXML-Registry tool.')
             print('       Download: https://github.com/thomaslaurenson/CellXML-Registry')
@@ -261,12 +263,12 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                                                    timestamp = timestamp)
 
     fs.process_apxmls()
-    hives = fs.process_target()
+    fs.process_target()
     fs.dfxml_report_hives()
     fs.dfxml_report()
     fs.results()
     
-    hives_dir = outputdir + "\\hives\\"
+    hives_dir = outputdir + os.sep + "hives" + os.sep
     
     ###################################
     # Perform Windows Registry analysis
