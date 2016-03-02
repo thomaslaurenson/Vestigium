@@ -282,24 +282,21 @@ class RegistryProcessing():
                     if fi.lower().endswith(rootkey.lower()):
                         # Generate RegXML
                         import subprocess
-                        print("MEOW", fi)
+                        devnull = open(os.devnull, 'w')
                         subp_command = ["CellXML-Registry-1.2.0.exe",
                                         "-r",
                                         "-f",
                                         fi]
-                        print("CMD", subp_command)
-                        subprocess.call(subp_command)
-                        # try:
-                            # devnull = open(os.devnull)
-                            # subp_command = ["CellXML-Registry-1.2.0.exe",
-                                            # "-r",
-                                            # "-f",
-                                            # fi]
-                            # print(subp_command)
-                            # subprocess.Popen(subp_command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).communicate()
-                        # except OSError as e:
-                            # if e.errno == os.errno.ENOENT:
-                                # print("FUCKES")
+                        #print("CMD", subp_command)
+                        subprocess.call(subp_command, stdout=devnull, stderr=devnull)
+
+        # Try again to classify required target hives and hive files
+        if regxml_count == 0:
+            registry_files = glob.glob(self.hives_dir + "*")
+            for fi in registry_files:
+                for rootkey in self.target_hives:
+                    if fi.lower().endswith(rootkey.lower() + ".xml"):
+                        self.to_process[rootkey].append(fi)
 
         logging.info("\n>>> Target Registry hive files:")
         for k in self.to_process:

@@ -161,6 +161,14 @@ def sha1_file(tfo):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
+    
+def md5_file(tfo):
+    """ Helper method to calculate MD5 hash of extracted hive file. """
+    hasher = hashlib.md5()
+    with open(tfo, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+    return hasher.hexdigest()    
 
 ################################################################################
 class FileSystemProcessing():
@@ -315,6 +323,12 @@ class FileSystemProcessing():
             if sha1 != tfo.sha1:
                 print("\n      Warning: SHA-1 hash mismatch for extracted hive file...")
                 print("      %s" % os.path.basename(out_path))
+        # Check the SHA-1 of fileobject VS extracted hive
+        elif tfo.md5 is not None:
+            md5 = md5_file(out_path)
+            if md5 != tfo.md5:
+                print("\n      Warning: Md5 hash mismatch for extracted hive file...")
+                print("      %s" % os.path.basename(out_path))                
                 
         # Add extracted hive file to 'hives' list
         self.hives.append(tfo)
@@ -340,15 +354,15 @@ class FileSystemProcessing():
                     self.process_target_fi(obj)
 
             # Save DFXML file: Format using minidom then write to file
-            print("\n  > Generating DFXML report of target file system...")
-            self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
-            temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
-            xml_fi = xml.dom.minidom.parse(temp_fi)		
-            dfxml_report = xml_fi.toprettyxml(indent="  ")
-            basename = os.path.splitext(os.path.basename(self.imagefile))[0]
-            fn = self.outputdir + "/" + basename + ".xml"
-            with open(fn, "w", encoding="utf-8") as f:
-                f.write(dfxml_report)
+            # print("\n  > Generating DFXML report of target file system...")
+            # self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
+            # temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
+            # xml_fi = xml.dom.minidom.parse(temp_fi)		
+            # dfxml_report = xml_fi.toprettyxml(indent="  ")
+            # basename = os.path.splitext(os.path.basename(self.imagefile))[0]
+            # fn = self.outputdir + "/" + basename + ".xml"
+            # with open(fn, "w", encoding="utf-8") as f:
+                # f.write(dfxml_report)
            
         # Return the list of extracted hive files (even if none extracted)     
         return self.hives
