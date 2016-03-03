@@ -238,20 +238,18 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             cmd = [cwd + "mmls.exe"]
         else:
             cmd = ["mmls"]
-            
         cmd.append(imagefile)
 
-        if platform.system() == "Windows":
-            try:
-                subprocess.check_output(cmd,
-                                        stderr=subprocess.STDOUT,
-                                        cwd=cwd)
-            except subprocess.CalledProcessError:
-                print('\nError: Vestigium.py')
-                print('       The supplied evidence file (disk image) does not have a valid partition.')
-                print('       %s' % imagefile)
-                print('       Now Exiting...')                
-                sys.exit(1)          
+        try:
+            subprocess.check_output(cmd,
+                                    stderr=subprocess.STDOUT,
+                                    cwd=cwd)
+        except subprocess.CalledProcessError:
+            print('\nError: Vestigium.py')
+            print('       The supplied evidence file (disk image) does not have a valid partition.')
+            print('       %s' % imagefile)
+            print('       Now Exiting...')                
+            sys.exit(1)          
         
     # Check APXML files exist (there may be multiple)
     for profile in profiles:
@@ -289,10 +287,13 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             if delete.lower() == 'y' or delete.lower() == 'yes':
                 shutil.rmtree(outputdir)
                 os.makedirs(outputdir)
+            else:
+                print('    Now Exiting...')
+                sys.exit(1)
         else:
             print('\n  > Error: The specified output directory already exists...')
             print('    %s' % outputdir)
-            print('       Now Exiting...')
+            print('    Now Exiting...')
             sys.exit(1)
     else:
         os.makedirs(outputdir)
@@ -301,7 +302,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     base_start_time = timeit.default_timer()        
 
     # Set up logging, and write case information
-    log = outputdir + "/vestigium.log"
+    log = outputdir + os.sep + "vestigium.log"
     logging.basicConfig(filename = log,
                         level=logging.DEBUG,
                         format = '%(message)s')
@@ -354,7 +355,9 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     ##############################
     # Perform file system analysis
     ##############################
-    start_time = timeit.default_timer()
+    # Start file system timer
+    fs_start_time = timeit.default_timer() 
+
     fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
                                                    xmlfile = xmlfile,
                                                    outputdir = outputdir,
@@ -368,12 +371,16 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.dfxml_report()
     fs.results()
     
+    # File system elapsed time
+    fs_elapsed = timeit.default_timer() - fs_start_time
+    
     hives_dir = outputdir + os.sep + "hives" + os.sep
     
     ###################################
     # Perform Windows Registry analysis
     ###################################
-    start_time = timeit.default_timer()
+    # Start file system timer
+    reg_start_time = timeit.default_timer() 
     reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
                                                 xmlfile = xmlfile,
                                                 outputdir = outputdir,
@@ -384,6 +391,9 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     reg.parse_target()
     reg.regxml_report()
     reg.results()
+    
+    # Registry elapsed time
+    reg_elapsed = timeit.default_timer() - reg_start_time
 
     # Print overview of results
     print("\n\n-----------------------")
@@ -392,7 +402,11 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     fs.results_overview()
     reg.results_overview()
 
-    # All done, log Vestigium elapsed run time
+    # All done, log processing timestamp   
+    logging.info("\n>>> TIMED FS: Total time elapsed:    %s" % fs_elapsed)
+    logging.info("\n>>> TIMED REG: Total time elapsed:    %s" % reg_elapsed)
+    
+    # Vestigium elapsed run time
     elapsed = timeit.default_timer() - base_start_time
     logging.info("\n>>> TIMED: Total time elapsed:    %s" % elapsed)
 
