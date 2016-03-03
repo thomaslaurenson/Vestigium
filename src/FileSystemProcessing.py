@@ -96,14 +96,6 @@ XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
               
 ################################################################################
 # Helper methods
-def sha1_file(fi):
-    """ Helper method to calculate SHA-1 hash value of a file. """
-    hasher = hashlib.sha1()
-    with open(fi, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-    return hasher.hexdigest()
-
 def ptime(self, t):
     """ Return the requested time format. 't' is a dfxml time value. """
     if t is None:
@@ -330,7 +322,7 @@ class FileSystemProcessing():
         elif tfo.md5 is not None:
             md5 = md5_file(out_path)
             if md5 != tfo.md5:
-                print("\n      Warning: Md5 hash mismatch for extracted hive file...")
+                print("\n      Warning: MD5 hash mismatch for extracted hive file...")
                 print("      %s" % os.path.basename(out_path))
                 
         # Add extracted hive file to 'hives' list

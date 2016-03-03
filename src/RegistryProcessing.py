@@ -189,7 +189,7 @@ class RegistryProcessing():
         Method to parse the RegXML CellObjects from the
         Application Profile XML structure.
         """
-        print(">>> Processing application profiles ...")
+        print("\n>>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
@@ -457,14 +457,6 @@ class RegistryProcessing():
     ###########################################################################
     def results(self):
         """ Print overview of results to log file. """
-        logging.info("\n\n>>> Windows Registry Analysis Overview:")
-        profile_states = [pco.app_state for pco in self.pcos]
-        target_states = [tco.original_cellobject.app_state for tco in self.matches]
-        for state in set(profile_states):
-            logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
-                                                       profile_states.count(state),
-                                                       target_states.count(state)))
-
         # Provide more detailed results, log a list of:
         # 1) Detected results (app, state, path)
         # 2) Not Detected results (app, state, path)
@@ -501,30 +493,38 @@ class RegistryProcessing():
                                                  pco.app_state,
                                                  pco.name_type,
                                                  pco.cellpath_norm))
+                                                 
+        logging.info("\n\n>>> Windows Registry Analysis Overview:")
+        profile_states = [pco.app_state for pco in self.pcos]
+        target_states = [tco.original_cellobject.app_state for tco in self.matches]
+        for state in set(profile_states):
+            logging.info("    {0:<20s} {1:5d} {2:10d}".format(state,
+                                                       profile_states.count(state),
+                                                       target_states.count(state)))
 
         # Print overview of results based on application state and hive file
-        ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
-        ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
-        ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "install"]
+        ins_sof = [tco for tco in self.matches if tco.rootkey == "software" and tco.original_cellobject.app_state == "install"]
+        ins_sys = [tco for tco in self.matches if tco.rootkey == "system" and tco.original_cellobject.app_state == "install"]
+        ins_ntu = [tco for tco in self.matches if tco.rootkey == "ntuser.dat" and tco.original_cellobject.app_state == "install"]
 
-        ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "open"]
-        ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "open"]
-        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]
+        ope_sof = [tco for tco in self.matches if tco.rootkey == "software" and tco.original_cellobject.app_state == "open"]
+        ope_sys = [tco for tco in self.matches if tco.rootkey == "system" and tco.original_cellobject.app_state == "open"]
+        ope_ntu = [tco for tco in self.matches if tco.rootkey == "ntuser.dat" and tco.original_cellobject.app_state == "open"]
 
-        clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "closed"]
-        clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "closed"]
-        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]
+        clo_sof = [tco for tco in self.matches if tco.rootkey == "software" and tco.original_cellobject.app_state == "closed"]
+        clo_sys = [tco for tco in self.matches if tco.rootkey == "system" and tco.original_cellobject.app_state == "closed"]
+        clo_ntu = [tco for tco in self.matches if tco.rootkey == "ntuser.dat" and tco.original_cellobject.app_state == "closed"]
 
-        uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "uninstall"]
-        uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "uninstall"]
-        uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "uninstall"]
+        uni_sof = [tco for tco in self.matches if tco.rootkey == "software" and tco.original_cellobject.app_state == "uninstall"]
+        uni_sys = [tco for tco in self.matches if tco.rootkey == "system" and tco.original_cellobject.app_state == "uninstall"]
+        uni_ntu = [tco for tco in self.matches if tco.rootkey == "ntuser.dat" and tco.original_cellobject.app_state == "uninstall"]
 
         total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)
         total_ope = len(ope_ntu) + len(ope_sof) + len(ope_sys)
         total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
         total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)
 
-        logging.info("\n>>> Windows Registry Analysis Overview:")
+        logging.info("\n>>> Windows Registry Hive Overview:")
         logging.info("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive",
                                                    "Install",
                                                    "Open",
@@ -563,55 +563,6 @@ class RegistryProcessing():
             print("    {0:<20s} {1:5d} {2:10d}".format(state,
                                                        profile_states.count(state),
                                                        target_states.count(state)))
-        return
-        # Print overview of results based on application state and hive file
-        ins_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "install"]
-        ins_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "install"]
-        ins_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "install"]
-
-        ope_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "open"]
-        ope_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "open"]
-        ope_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "open"]
-
-        clo_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "closed"]
-        clo_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "closed"]
-        clo_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "closed"]
-
-        uni_sof = [tco for tco in self.matches if tco.rootkey == "SOFTWARE" and tco.original_cellobject.app_state == "uninstall"]
-        uni_sys = [tco for tco in self.matches if tco.rootkey == "SYSTEM" and tco.original_cellobject.app_state == "uninstall"]
-        uni_ntu = [tco for tco in self.matches if tco.rootkey == "NTUSER.DAT" and tco.original_cellobject.app_state == "uninstall"]
-
-        total_ins = len(ins_ntu) + len(ins_sof) + len(ins_sys)
-        total_ope = len(ope_ntu) + len(ope_sof) + len(ope_sys)
-        total_clo = len(clo_ntu) + len(clo_sof) + len(clo_sys)
-        total_uni = len(uni_ntu) + len(uni_sof) + len(uni_sys)
-
-        print(">>> Windows Registry Analysis Overview:")
-        print("    {0:<12s} {1:<8s} {2:<8s} {3:<8s} {4:<8s}".format("Hive",
-                                                   "Install",
-                                                   "Open",
-                                                   "Close",
-                                                   "Uninstall"))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SOFTWARE",
-                                                   len(ins_sof),
-                                                   len(ope_sof),
-                                                   len(clo_sof),
-                                                   len(uni_sof)))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("SYSTEM",
-                                                   len(ins_sys),
-                                                   len(ope_sys),
-                                                   len(clo_sys),
-                                                   len(uni_sys)))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("NTUSER",
-                                                   len(ins_ntu),
-                                                   len(ope_ntu),
-                                                   len(clo_ntu),
-                                                   len(uni_ntu)))
-        print("    {0:<12s} {1:<8d} {2:<8d} {3:<8d} {4:<8d}".format("TOTAL",
-                                                   total_ins,
-                                                   total_ope,
-                                                   total_clo,
-                                                   total_uni))
 
     ###########################################################################
     def regxml_report(self):
