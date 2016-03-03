@@ -218,10 +218,15 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         # CellXML-Registry check, not available on Linux
         # Print error to inform user
         print('\nError: Vestigium.py')
-        print('       The Vestigium.py module requires the CellXML-Registry tool to parse Registry entries. It is not avauilable on Linux.')
+        print('       The CellXML-Registry tool is required to parse Registry entries.')
         print('       You can continue, but without Registry support...')
         # Switch to just file system analysis
-        mode = "file"
+        cont = input('  > Continue processing? ([Y] or N): ')
+        if cont.lower() == 'y' or cont.lower() == 'yes':
+            mode = "file"
+        else:
+            print('    Now Exiting...')
+            sys.exit(1)
             
     # Check evidence file (disk image) exists
     if not os.path.isfile(imagefile):
@@ -237,6 +242,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             cwd = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep
             cmd = [cwd + "mmls.exe"]
         else:
+            cwd = os.getcwd()
             cmd = ["mmls"]
         cmd.append(imagefile)
 
@@ -336,7 +342,6 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         quit()
 
     if (mode == 'reg'):
-        print(">>> %s" % imagefile)
         reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
                                     xmlfile = xmlfile,
                                     outputdir = outputdir,

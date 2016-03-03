@@ -226,6 +226,7 @@ class FileSystemProcessing():
         self.target_dir_count = 0
         self.matches_count = 0
 
+    ###########################################################################
     def process_apxmls(self):
         """ Process Application Profiles (APXML documents). """
         print("\n>>> Processing application profiles ...")
@@ -275,6 +276,7 @@ class FileSystemProcessing():
                     # Log all profile entries (Application, State, Path)
                     logging.info("    %s\t%s\t%s" % (apxml_obj.metadata.app_name, pfo.app_state, pfo.filename_norm))
 
+    ###########################################################################
     def dfxml_report_hives(self):
         """ Generate a DFXML report of extracted hive files. """
         dc = {"name" : os.path.basename(__file__),
@@ -299,6 +301,7 @@ class FileSystemProcessing():
         with open(report_fn, 'w') as f:
             f.write(xml_fi.toprettyxml(indent="  "))
 
+    ###########################################################################
     def extract_hive(self, tfo):
         """ Extract a Windows Registry hive file from target data set. """
         out_fn = tfo.filename
@@ -328,11 +331,12 @@ class FileSystemProcessing():
             md5 = md5_file(out_path)
             if md5 != tfo.md5:
                 print("\n      Warning: Md5 hash mismatch for extracted hive file...")
-                print("      %s" % os.path.basename(out_path))                
+                print("      %s" % os.path.basename(out_path))
                 
         # Add extracted hive file to 'hives' list
         self.hives.append(tfo)
 
+    ###########################################################################
     def process_target(self):
         """ Parse the file system of the target data set. """
         print("\n>>> Processing target data set ...")
@@ -364,6 +368,7 @@ class FileSystemProcessing():
             # with open(fn, "w", encoding="utf-8") as f:
                 # f.write(dfxml_report)
 
+    ###########################################################################
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
         # File system count progress indicator
@@ -457,6 +462,7 @@ class FileSystemProcessing():
                         logging.info("  > FILE MD5: %s\t%s\t%s" % (tfo.filename, tfo.md5, tfo.is_allocated()))
                         logging.info("             : %s\t%s\t%s\t%s\t%s" % (pfo.filename_norm, pfo.md5, pfo.is_allocated(), pfo.app_name, pfo.app_state))
 
+    ###########################################################################
     def results(self):
         """ Print overview of results to log file. """
         logging.info("\n>>> File System Analysis Overview:")
@@ -496,6 +502,7 @@ class FileSystemProcessing():
         for pfo in notfound:
             logging.info("    %s\t%s\t%s" % (pfo.app_name, pfo.app_state, pfo.filename_norm))
 
+    ###########################################################################
     def results_overview(self):
         """ Print overview of results to console. """
         print("\n>>> File System Analysis Overview:")
@@ -506,6 +513,7 @@ class FileSystemProcessing():
                                                        profile_states.count(state),
                                                        target_states.count(state)))
 
+    ###########################################################################
     def dfxml_report(self):
         """ Generate a DFXML report of matches. """
         dc = {"name" : os.path.basename(__file__),
