@@ -146,35 +146,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
                         default = False)
 
     args = parser.parse_args()
-
-    # Operating system check with tool dependency check
-    if platform.system() == "Windows":
-        fiwalk = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
-        if not check_program(fiwalk):
-            print('Error: Vestigium.py')
-            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
-            print('       Download: http://digitalcorpora.org/downloads/fiwalk/fiwalk-0.6.3.exe')
-            print('       Now Exiting...')
-            sys.exit(1)
-        cellxml = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
-        if not check_program(cellxml):
-            print('Error: Vestigium.py')
-            print('       The Vestigium.py module requires the CellXML-Registry tool.')
-            print('       Download: https://github.com/thomaslaurenson/CellXML-Registry')
-            print('       Now Exiting...')
-            sys.exit(1)    
-                                
-    elif platform.system() == "Linux":
-        if not check_program("fiwalk"):
-            print('Error: Vestigium.py')
-            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
-            print('       Download: https://github.com/sleuthkit/sleuthkit')
-            print('       Now Exiting...')
-            sys.exit(1)
-            
-    # Start Vestigium timer
-    base_start_time = timeit.default_timer()
-
+    
     # Parse command line arguments
     imagefile = os.path.abspath(args.imagefile)
     outputdir = os.path.abspath(args.outputdir)
@@ -184,7 +156,130 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     ignore_dotdirs = args.d
     timestamp = args.t
     zapdir = args.z
+    mode = args.e
 
+    # Operating system check with tool dependency check
+    if platform.system() == "Windows":
+        # fiwalk check
+        fiwalk = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
+        if not check_program(fiwalk):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
+            print('       Download: http://digitalcorpora.org/downloads/fiwalk/fiwalk-0.6.3.exe')
+            print('       Now Exiting...')
+            sys.exit(1)
+        # CellXML-Registry check
+        cellxml = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
+        if not check_program(cellxml):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the CellXML-Registry tool.')
+            print('       Download: https://github.com/thomaslaurenson/CellXML-Registry')
+            print('       Now Exiting...')
+            sys.exit(1)
+        # img_cat check
+        img_cat = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep + "img_cat.exe"
+        if not check_program(img_cat):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the img_cat tool from TSK.')
+            print('       Download: http://www.sleuthkit.org/sleuthkit/download.php')
+            print('       Now Exiting...')
+            sys.exit(1)
+        # mmls check
+        mmls = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep + "mmls.exe"
+        if not check_program(mmls):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the mmls tool from TSK.')
+            print('       Download: http://www.sleuthkit.org/sleuthkit/download.php')
+            print('       Now Exiting...')
+            sys.exit(1)                           
+                                
+    elif platform.system() == "Linux":
+        # fiwalk check
+        if not check_program("fiwalk"):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
+            print('       Download: https://github.com/sleuthkit/sleuthkit')
+            print('       Now Exiting...')
+            sys.exit(1)
+        # mmls check
+        if not check_program("mmls"):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the mmls tool from The Sleuth Kit.')
+            print('       Download: https://github.com/sleuthkit/sleuthkit')
+            print('       Now Exiting...')
+            sys.exit(1)    
+        # img_cat check
+        if not check_program("img_cat"):
+            print('\nError: Vestigium.py')
+            print('       The Vestigium.py module requires the img_cat tool from The Sleuth Kit.')
+            print('       Download: https://github.com/sleuthkit/sleuthkit')
+            print('       Now Exiting...')
+            sys.exit(1)
+        # CellXML-Registry check, not available on Linux
+        # Print error to inform user
+        print('\nError: Vestigium.py')
+        print('       The Vestigium.py module requires the CellXML-Registry tool to parse Registry entries. It is not avauilable on Linux.')
+        print('       You can continue, but without Registry support...')
+        # Switch to just file system analysis
+        mode = "file"
+            
+    # Check evidence file (disk image) exists
+    if not os.path.isfile(imagefile):
+        print('\nError: Vestigium.py')
+        print('       The supplied evidence file (disk image) does not exist.')
+        print('       %s' % imagefile)
+        print('       Now Exiting...')
+        sys.exit(1)
+    
+    # Check evidence file (disk image) has valid partition table
+    if os.path.isfile(imagefile):
+        if platform.system() == "Windows":
+            cwd = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep
+            cmd = [cwd + "mmls.exe"]
+        else:
+            cmd = ["mmls"]
+            
+        cmd.append(imagefile)
+
+        if platform.system() == "Windows":
+            try:
+                subprocess.check_output(cmd,
+                                        stderr=subprocess.STDOUT,
+                                        cwd=cwd)
+            except subprocess.CalledProcessError:
+                print('\nError: Vestigium.py')
+                print('       The supplied evidence file (disk image) does not have a valid partition.')
+                print('       %s' % imagefile)
+                print('       Now Exiting...')                
+                sys.exit(1)          
+        
+    # Check APXML files exist (there may be multiple)
+    for profile in profiles:
+        if not os.path.isfile(profile):
+            print('\nError: Vestigium.py')
+            print('       The supplied APXML file does not exist.')
+            print('       %s' % profile)
+            print('       Now Exiting...')
+            sys.exit(1)        
+        
+    # Check dfxml file exists (if supplied)
+    if xmlfile:
+        if not os.path.isfile(xmlfile):
+            print('\nError: Vestigium.py')
+            print('       The supplied DFXML file does not exist.')
+            print('       %s' % xmlfile)
+            print('       Now Exiting...')
+            sys.exit(1)
+
+    # Check hives directory exists (if supplied)
+    if hives_dir:
+        if not os.path.isdir(hives_dir):
+            print('\nError: Vestigium.py')
+            print('       The supplied hives directory does not exist.')
+            print('       %s' % hives_dir)
+            print('       Now Exiting...')
+            sys.exit(1)              
+            
     # Create output folder (with error checking)
     if os.path.exists(outputdir) and os.path.isdir(outputdir):
         if zapdir:
@@ -197,10 +292,13 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         else:
             print('\n  > Error: The specified output directory already exists...')
             print('    %s' % outputdir)
-            print('    Quitting...')
-            quit()
+            print('       Now Exiting...')
+            sys.exit(1)
     else:
         os.makedirs(outputdir)
+        
+    # Start Vestigium timer
+    base_start_time = timeit.default_timer()        
 
     # Set up logging, and write case information
     log = outputdir + "/vestigium.log"
@@ -220,7 +318,8 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     logging.info("    Timestamp:        %s" % timestamp)
     logging.info("    Zap Output (dir): %s" % zapdir)
 
-    if (args.e == 'file'):
+    # Testing mode, perform only file system or Registry analysis
+    if (mode == 'file'):
         fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
                                                xmlfile = xmlfile,
                                                outputdir = outputdir,
@@ -235,7 +334,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         fs.results_overview()
         quit()
 
-    if (args.e == 'reg'):
+    if (mode == 'reg'):
         print(">>> %s" % imagefile)
         reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
                                     xmlfile = xmlfile,
@@ -251,6 +350,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
 
         quit()
 
+    # Normal tool operating starts here...
     ##############################
     # Perform file system analysis
     ##############################
