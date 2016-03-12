@@ -169,7 +169,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             print('       Now Exiting...')
             sys.exit(1)
         # CellXML-Registry check
-        cellxml = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
+        cellxml = "CellXML-Registry-1.2.1" + os.sep + "CellXML-Registry-1.2.1.exe"
         if not check_program(cellxml):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the CellXML-Registry tool.')
@@ -177,7 +177,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             print('       Now Exiting...')
             sys.exit(1)
         # img_cat check
-        img_cat = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep + "img_cat.exe"
+        img_cat = "sleuthkit-4.1.3-win32" + os.sep + "bin" + os.sep + "img_cat.exe"
         if not check_program(img_cat):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the img_cat tool from TSK.')
@@ -185,7 +185,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             print('       Now Exiting...')
             sys.exit(1)
         # mmls check
-        mmls = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep + "mmls.exe"
+        mmls = "sleuthkit-4.1.3-win32" + os.sep + "bin" + os.sep + "mmls.exe"
         if not check_program(mmls):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the mmls tool from TSK.')
@@ -237,25 +237,27 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         sys.exit(1)
     
     # Check evidence file (disk image) has valid partition table
-    if os.path.isfile(imagefile):
-        if platform.system() == "Windows":
-            cwd = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep
-            cmd = [cwd + "mmls.exe"]
-        else:
-            cwd = os.getcwd()
-            cmd = ["mmls"]
-        cmd.append(imagefile)
+    # Sometime fiwalk can run without a valid partition?!
+    # Therefore, commented out
+#    if os.path.isfile(imagefile):
+#        if platform.system() == "Windows":
+#            cwd = "sleuthkit-4.1.3-win32" + os.sep + "bin" + os.sep
+#            cmd = [cwd + "mmls.exe"]
+#        else:
+#            cwd = os.getcwd()
+#            cmd = ["mmls"]
+#        cmd.append(imagefile)
 
-        try:
-            subprocess.check_output(cmd,
-                                    stderr=subprocess.STDOUT,
-                                    cwd=cwd)
-        except subprocess.CalledProcessError:
-            print('\nError: Vestigium.py')
-            print('       The supplied evidence file (disk image) does not have a valid partition.')
-            print('       %s' % imagefile)
-            print('       Now Exiting...')                
-            sys.exit(1)          
+#        try:
+#            subprocess.check_output(cmd,
+#                                    stderr=subprocess.STDOUT,
+#                                    cwd=cwd)
+#        except subprocess.CalledProcessError:
+#            print('\nError: Vestigium.py')
+#            print('       The supplied evidence file (disk image) does not have a valid partition.')
+#            print('       %s' % imagefile)
+#            print('       Now Exiting...')                
+#            sys.exit(1)          
         
     # Check APXML files exist (there may be multiple)
     for profile in profiles:
@@ -327,6 +329,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
 
     # Testing mode, perform only file system or Registry analysis
     if (mode == 'file'):
+        fs_start_time = timeit.default_timer()
         fs = FileSystemProcessing.FileSystemProcessing(imagefile = imagefile,
                                                xmlfile = xmlfile,
                                                outputdir = outputdir,
@@ -339,9 +342,16 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         fs.dfxml_report()
         fs.results()
         fs.results_overview()
+
+        # All done, log processing timestamp   
+        fs_elapsed = timeit.default_timer() - fs_start_time
+        logging.info("\n>>> TIMED FS: Total time elapsed:    %s" % fs_elapsed)
+        
+        print("\n\n>>> Finished.\n")
         quit()
 
     if (mode == 'reg'):
+        reg_start_time = timeit.default_timer() 
         reg = RegistryProcessing.RegistryProcessing(imagefile = imagefile,
                                     xmlfile = xmlfile,
                                     outputdir = outputdir,
@@ -353,6 +363,10 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         reg.regxml_report()
         reg.results()
         reg.results_overview()
+
+        # All done, log processing timestamp   
+        reg_elapsed = timeit.default_timer() - reg_start_time
+        logging.info("\n>>> TIMED REG: Total time elapsed:    %s" % reg_elapsed)
 
         quit()
 

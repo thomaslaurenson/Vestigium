@@ -176,6 +176,10 @@ class RegistryProcessing():
         self.target_key_count = 0
         self.target_value_count = 0
         self.matches_count = 0
+        self.allocated_count = 0
+        self.unallocated_count = 0
+        self.hive_count = 0
+        self.hive_processed_count = 0
 
         # active_hive specifies the hive name (base name) for the hive being processed
         self.active_hive = None
@@ -189,7 +193,8 @@ class RegistryProcessing():
         Method to parse the RegXML CellObjects from the
         Application Profile XML structure.
         """
-        print("\n>>> Processing application profiles ...")
+        print("\n\n>>> PERFORMING REGISTRY ANALYSIS ...")
+        print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
@@ -270,6 +275,7 @@ class RegistryProcessing():
         # Classify required target hives and hive files
         regxml_count = 0
         for fi in registry_files:
+            self.hive_count += 1
             for rootkey in self.target_hives:
                 if fi.lower().endswith(rootkey.lower() + ".xml"):
                     self.to_process[rootkey].append(fi)
@@ -283,11 +289,14 @@ class RegistryProcessing():
                         # Generate RegXML
                         import subprocess
                         devnull = open(os.devnull, 'w')
-                        tool = "CellXML-Registry-1.2.0" + os.sep + "CellXML-Registry-1.2.0.exe"
+                        tool = "CellXML-Registry-1.2.1" + os.sep + "CellXML-Registry-1.2.1.exe"
                         subp_command = [tool,
                                         "-r",
                                         "-f",
                                         fi]
+                        # subp_command = [tool,
+                                        # "-f",
+                                        # fi]
                         #print("CMD", subp_command)
                         subprocess.call(subp_command, stdout=devnull, stderr=devnull)
 
@@ -303,6 +312,7 @@ class RegistryProcessing():
         for k in self.to_process:
             for v in self.to_process[k]:
                 logging.info("  > %s\t%s" % (k,v))
+                self.hive_processed_count += 1
                 
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
@@ -320,6 +330,15 @@ class RegistryProcessing():
                     if isinstance(obj, Objects.CellObject):
                         obj.rootkey = rootkey
                         self.process_target_co(obj)
+                  
+        # Log all counts                        
+        logging.info("\n>>> Registry Counts:")     
+        logging.info("  > KEY COUNT: %d" % self.target_key_count)
+        logging.info("  > VALUE COUNT: %d" % self.target_value_count)
+        logging.info("  > ALLOC COUNT: %d" % self.allocated_count)
+        logging.info("  > UNALLOC COUNT: %d" % self.unallocated_count)
+        logging.info("  > HIVE COUNT: %d" % self.hive_count)
+        logging.info("  > PROCESSED HIVE COUNT: %d" % self.hive_processed_count)   
 
     ###########################################################################
     def process_target_co(self, tco):
@@ -330,6 +349,11 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
+            
+        if tco.alloc == 1:
+            self.allocated_count += 1
+        else:
+            self.unallocated_count += 1
             
         # Print the current progress
         sys.stdout.write(("\r  > Keys: {0:6}  Values: {1:6}"  

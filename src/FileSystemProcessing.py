@@ -217,11 +217,14 @@ class FileSystemProcessing():
         self.target_file_count = 0
         self.target_dir_count = 0
         self.matches_count = 0
+        self.allocated_count = 0
+        self.unallocated_count = 0
 
     ###########################################################################
     def process_apxmls(self):
         """ Process Application Profiles (APXML documents). """
-        print("\n>>> Processing application profiles ...")
+        print("\n>>> PERFORMING FILE SYSTEM ANALYSIS ...")
+        print(">>> Processing application profiles ...")
         logging.info("\n>>> Application profile information:")
 
         # Process each target Application Profile XML (APXML) document
@@ -304,6 +307,14 @@ class FileSystemProcessing():
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         
+        # Check runs
+        if tfo.byte_runs:		
+            for run in tfo.byte_runs:
+                if not run.len:
+                    print("\n      Warning: Could not extract hive file...")
+                    print("      %s" % os.path.basename(out_path))
+                    return					
+		
         # Open output file and write file contents
         with open(out_path, 'wb') as f:
             if tfo.byte_runs:
@@ -350,7 +361,7 @@ class FileSystemProcessing():
                     self.process_target_fi(obj)
 
             # Save DFXML file: Format using minidom then write to file
-            print("\n  > Generating DFXML report of target file system...")
+            # print("\n  > Generating DFXML report of target file system...")
             # self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
             # temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
             # xml_fi = xml.dom.minidom.parse(temp_fi)		
@@ -359,7 +370,14 @@ class FileSystemProcessing():
             # fn = self.outputdir + "/" + basename + ".xml"
             # with open(fn, "w", encoding="utf-8") as f:
                 # f.write(dfxml_report)
-
+                
+        # Log all counts
+        logging.info("\n>>> File System Counts:")     
+        logging.info("  > FILE COUNT: %d" % self.target_file_count)
+        logging.info("  > DIR COUNT: %d" % self.target_dir_count)
+        logging.info("  > ALLOC COUNT: %d" % self.allocated_count)
+        logging.info("  > UNALLOC COUNT: %d" % self.unallocated_count)
+                
     ###########################################################################
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
@@ -369,10 +387,19 @@ class FileSystemProcessing():
         elif tfo.meta_type == 1:
             self.target_file_count += 1
         sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
+        
+        # Get an allocated vs unallocated count (for logging)
+        if tfo.is_allocated():
+            self.allocated_count += 1
+        else:
+            self.unallocated_count += 1
 
         # Extract hive file if found
         for hive_name in hive_names:
-            fn = tfo.filename.lower()
+            if tfo.filename:
+                fn = tfo.filename.lower()
+            else:
+                fn = ""
             if fn.endswith(hive_name) and tfo.is_allocated():
                 self.extract_hive(tfo)
 

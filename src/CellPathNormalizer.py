@@ -114,7 +114,7 @@ class CellPathNormalizer():
         
         # Decrypt a UserAssist entry ('P:' equates to 'C:' using rot13) 
         if basename.startswith("P:"):
-            basename_norm = codecs.decode(obj.basename, "rot_13")
+            basename_norm = codecs.decode(basename, "rot_13")
    
         # Strip UserAssist prefix in older windows versions
         elif basename.startswith("HRZR_EHACNGU"):
