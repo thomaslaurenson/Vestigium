@@ -229,9 +229,9 @@ class RegistryProcessing():
                             obj.cellpath_norm = obj.cellpath_norm.replace(obj.basename, obj.basename_norm)
 
                     # Set the application name
-                    obj.app_name = apxml_obj.metadata.app_name                
+                    obj.app_name = apxml_obj.metadata.app_name
                     """
-                    
+
                     # Add Profile CellObject (PCO) to:
                     # 1) PCO list
                     # 2) PCO dictionary
@@ -280,7 +280,7 @@ class RegistryProcessing():
                 if fi.lower().endswith(rootkey.lower() + ".xml"):
                     self.to_process[rootkey].append(fi)
                     regxml_count += 1
-                    
+
         # If no RegXML files were found, we need to generate RegXML
         if regxml_count == 0:
             for fi in registry_files:
@@ -313,11 +313,11 @@ class RegistryProcessing():
             for v in self.to_process[k]:
                 logging.info("  > %s\t%s" % (k,v))
                 self.hive_processed_count += 1
-                
+
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         for rootkey in self.target_hives:
-            
+
             # Can exclude rootkeys during testing to speed up processing
 #            if rootkey == "system" or rootkey == "software":
 #                continue
@@ -330,15 +330,15 @@ class RegistryProcessing():
                     if isinstance(obj, Objects.CellObject):
                         obj.rootkey = rootkey
                         self.process_target_co(obj)
-                  
-        # Log all counts                        
-        logging.info("\n>>> Registry Counts:")     
+
+        # Log all counts
+        logging.info("\n>>> Registry Counts:")
         logging.info("  > KEY COUNT: %d" % self.target_key_count)
         logging.info("  > VALUE COUNT: %d" % self.target_value_count)
         logging.info("  > ALLOC COUNT: %d" % self.allocated_count)
         logging.info("  > UNALLOC COUNT: %d" % self.unallocated_count)
         logging.info("  > HIVE COUNT: %d" % self.hive_count)
-        logging.info("  > PROCESSED HIVE COUNT: %d" % self.hive_processed_count)   
+        logging.info("  > PROCESSED HIVE COUNT: %d" % self.hive_processed_count)
 
     ###########################################################################
     def process_target_co(self, tco):
@@ -349,18 +349,18 @@ class RegistryProcessing():
             self.target_key_count += 1
         elif tco.name_type == 'v':
             self.target_value_count += 1
-            
+
         if tco.alloc == 1:
             self.allocated_count += 1
         else:
             self.unallocated_count += 1
-            
+
         # Print the current progress
-        sys.stdout.write(("\r  > Keys: {0:6}  Values: {1:6}"  
+        sys.stdout.write(("\r  > Keys: {0:6}  Values: {1:6}"
                           " Matches: {2:4}  Hive: {3:10}").format(
-                         self.target_key_count, 
-                         self.target_value_count, 
-                         self.matches_count, 
+                         self.target_key_count,
+                         self.target_value_count,
+                         self.matches_count,
                          self.active_rootkey));
 
         # Normalize the TCO rootkey
@@ -378,22 +378,22 @@ class RegistryProcessing():
         # Normalize the TCO basename
         tco.basename_norm = None
         if tco.basename:
-            if (tco.basename.startswith("C:") or 
-                tco.basename.startswith("P:") or 
+            if (tco.basename.startswith("C:") or
+                tco.basename.startswith("P:") or
                 tco.basename.startswith("hrzr_ehacngu")):
-                
+
                 # Transform the basename (this ultimately calls file system path normaliser)
                 normbasename = self.cell_path_normalizer.normalize_basename(tco.basename)
-                
+
                 # Replace blackslashes with forwardslashes (for consistency)
                 normbasename = normbasename.replace('/', '\\')
                 tco.basename_norm = normbasename
-                
+
                 # Finally update the cellpath_norm for a basename transformation
                 if tco.cellpath_norm:
                     tco.cellpath_norm = tco.cellpath_norm.replace(tco.basename.lower(),
                                                                   tco.basename_norm)
-                                                                          
+
         # MATCH KEYS
         if tco.name_type == 'k':
             if tco.cellpath_norm in self.pcos_keys:
@@ -517,7 +517,7 @@ class RegistryProcessing():
                                                  pco.app_state,
                                                  pco.name_type,
                                                  pco.cellpath_norm))
-                                                 
+
         logging.info("\n\n>>> Windows Registry Analysis Overview:")
         profile_states = [pco.app_state for pco in self.pcos]
         target_states = [tco.original_cellobject.app_state for tco in self.matches]

@@ -81,7 +81,7 @@ class CellPathNormalizer():
 
     def normalize_cellpath(self, cellpath, rootkey):
         """ Normalize the cellpath of the Target CellObject (TCO). """
-        
+
         # Split a cellpath on backslashes, or return if None
         if cellpath:
             normpath = cellpath.split("\\")
@@ -109,27 +109,27 @@ class CellPathNormalizer():
     def normalize_basename(self, basename):
         """ If the basename is a path, normalize using the normalize function
             from the FilePathNormalizer module. """
-       
+
         basename_norm = None
-        
-        # Decrypt a UserAssist entry ('P:' equates to 'C:' using rot13) 
+
+        # Decrypt a UserAssist entry ('P:' equates to 'C:' using rot13)
         if basename.startswith("P:"):
             basename_norm = codecs.decode(basename, "rot_13")
-   
+
         # Strip UserAssist prefix in older windows versions
         elif basename.startswith("HRZR_EHACNGU"):
             basename_norm = basename[12:]
-        
+
         else:
             basename_norm = basename
-    
+
         # If basename_norm starts with C:
         if basename_norm.startswith("C:"):
             basename_norm = basename_norm[3:]
-        
+
         # Replace backslash with forward slash
         basename_norm = basename_norm.replace('\\', '/')
-        
+
         # Now normlaise using file path normaliser modules
         basename_norm = self.file_path_normalizer.normalize(basename_norm)
 

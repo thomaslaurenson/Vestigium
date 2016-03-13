@@ -93,7 +93,7 @@ hive_names = ['ntuser.dat',
               'local settings/application data/microsoft/windows/usrclass.dat']
 
 XMLNS_DELTA = "http://www.forensicswiki.org/wiki/Forensic_Disk_Differencing"
-              
+
 ################################################################################
 # Helper methods
 def ptime(self, t):
@@ -104,7 +104,7 @@ def ptime(self, t):
         return str(t.timestamp())
     else:
         return str(t.iso8601())
-        
+
 def match_dir(tfo, pfo):
     """ Match a directory artifact. """
     return match_filename_norm(tfo, pfo) and match_allocation(tfo, pfo)
@@ -120,7 +120,7 @@ def match_file(tfo, pfo):
           match_allocation(tfo, pfo)):
         return 1
     else:
-        return 0        
+        return 0
 
 def match_filename_norm(tfo, pfo):
     """ Compare fullpath of target fileobejct to profile filobject. """
@@ -129,10 +129,10 @@ def match_filename_norm(tfo, pfo):
 def match_hash_sha1(tfo, pfo):
     """ Compare SHA-1 hash of target fileobejct to profile filobject. """
     return tfo.sha1 == pfo.sha1
-    
+
 def match_hash(tfo, pfo):
     """ Compare MD5 hash of target fileobejct to profile filobject. """
-    return tfo.md5 == pfo.md5    
+    return tfo.md5 == pfo.md5
 
 def match_size(tfo, pfo):
     """ Compare SHA-1 hash of target fileobejct to profile filobject. """
@@ -153,14 +153,14 @@ def sha1_file(tfo):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
-    
+
 def md5_file(tfo):
     """ Helper method to calculate MD5 hash of extracted hive file. """
     hasher = hashlib.md5()
     with open(tfo, 'rb') as f:
         buf = f.read()
         hasher.update(buf)
-    return hasher.hexdigest()    
+    return hasher.hexdigest()
 
 ################################################################################
 class FileSystemProcessing():
@@ -209,7 +209,7 @@ class FileSystemProcessing():
 
         # Create a list for FileObjects matches
         self.matches = list()
-        
+
         # Create a list of extracted hives
         self.hives = list()
 
@@ -254,7 +254,7 @@ class FileSystemProcessing():
                         split = obj.filename.split("\\")
                         obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
                     """
-                    
+
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
                     # 2) PFO dictionary
@@ -303,18 +303,18 @@ class FileSystemProcessing():
         out_fn = out_fn.replace('/','-').replace(' ','-')
         out_dir = self.outputdir + os.sep + "hives" + os.sep
         out_path = os.path.join(out_dir, out_fn)
-        
+
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        
+
         # Check runs
-        if tfo.byte_runs:		
+        if tfo.byte_runs:
             for run in tfo.byte_runs:
                 if not run.len:
                     print("\n      Warning: Could not extract hive file...")
                     print("      %s" % os.path.basename(out_path))
-                    return					
-		
+                    return
+
         # Open output file and write file contents
         with open(out_path, 'wb') as f:
             if tfo.byte_runs:
@@ -322,7 +322,7 @@ class FileSystemProcessing():
                 contents = b"".join(contents)
                 f.write(contents)
         f.close()
-        
+
         # Check the SHA-1 of fileobject VS extracted hive
         if tfo.sha1 is not None:
             sha1 = sha1_file(out_path)
@@ -335,7 +335,7 @@ class FileSystemProcessing():
             if md5 != tfo.md5:
                 print("\n      Warning: MD5 hash mismatch for extracted hive file...")
                 print("      %s" % os.path.basename(out_path))
-                
+
         # Add extracted hive file to 'hives' list
         self.hives.append(tfo)
 
@@ -364,20 +364,20 @@ class FileSystemProcessing():
             # print("\n  > Generating DFXML report of target file system...")
             # self.tds_dfxml.add_namespace("delta", XMLNS_DELTA)
             # temp_fi = io.StringIO(self.tds_dfxml.to_dfxml())
-            # xml_fi = xml.dom.minidom.parse(temp_fi)		
+            # xml_fi = xml.dom.minidom.parse(temp_fi)
             # dfxml_report = xml_fi.toprettyxml(indent="  ")
             # basename = os.path.splitext(os.path.basename(self.imagefile))[0]
             # fn = self.outputdir + "/" + basename + ".xml"
             # with open(fn, "w", encoding="utf-8") as f:
                 # f.write(dfxml_report)
-                
+
         # Log all counts
-        logging.info("\n>>> File System Counts:")     
+        logging.info("\n>>> File System Counts:")
         logging.info("  > FILE COUNT: %d" % self.target_file_count)
         logging.info("  > DIR COUNT: %d" % self.target_dir_count)
         logging.info("  > ALLOC COUNT: %d" % self.allocated_count)
         logging.info("  > UNALLOC COUNT: %d" % self.unallocated_count)
-                
+
     ###########################################################################
     def process_target_fi(self, tfo):
         """ Process each Target FileObject (TFO). """
@@ -387,12 +387,16 @@ class FileSystemProcessing():
         elif tfo.meta_type == 1:
             self.target_file_count += 1
         sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
-        
+
         # Get an allocated vs unallocated count (for logging)
         if tfo.is_allocated():
             self.allocated_count += 1
         else:
             self.unallocated_count += 1
+
+        # Set an emply file name to solve None problems
+        if not tfo.filename:
+            tfo.filename = ""
 
         # Extract hive file if found
         for hive_name in hive_names:
@@ -404,11 +408,13 @@ class FileSystemProcessing():
                 self.extract_hive(tfo)
 
         # Check if file is to be generically excluded
-        if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
-            return
+        if tfo.filename:
+            if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
+                return
 
         # Normalize the TFO full path/filename
-        tfo.filename_norm = self.file_path_normalizer.normalize(tfo.filename)
+        if tfo.filename:
+            tfo.filename_norm = self.file_path_normalizer.normalize(tfo.filename)
 
         # Add basename to TFO FileObject
         split = tfo.filename.split("/")

@@ -87,7 +87,7 @@ class FilePathNormalizer():
                 elif key == "localappdata":
                     if fullpath.startswith(name):
                         fullpath = fullpath.replace(name, "%LOCALAPPDATA%")
-                
+
                 # Normalize Windows directory path
                 if key == "windir":
                     if fullpath.startswith(name):
