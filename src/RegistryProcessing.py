@@ -4,7 +4,7 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2016/02/12
+Date:    2016/03/16
 
 Description:
 RegistryMatching.py is a Vestigium module to perform Windows Registry analysis.

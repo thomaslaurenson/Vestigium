@@ -4,7 +4,7 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2016/02/12
+Date:    2016/03/16
 
 Description:
 FileSystemMatching.py is a Vestigium module to perform file system analysis.
@@ -41,6 +41,7 @@ import io
 import hashlib
 import xml.dom.minidom
 import collections
+import subprocess
 
 try:
     import FilePathNormalizer
@@ -161,7 +162,7 @@ def md5_file(tfo):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
-
+    
 ################################################################################
 class FileSystemProcessing():
     def __init__(self, imagefile=None, xmlfile=None, outputdir=None, profiles=None, ignore_dotdirs=False, timestamp=False):
@@ -219,6 +220,15 @@ class FileSystemProcessing():
         self.matches_count = 0
         self.allocated_count = 0
         self.unallocated_count = 0
+        
+        # Set disk image volume properties
+        self.partition_offset = 0
+        self.ftype_str = None
+        self.imagefile_type = None
+        
+        # Set known file size for selective hashes
+        self.known_filesizes = set()
+        
 
     ###########################################################################
     def process_apxmls(self):
@@ -254,6 +264,10 @@ class FileSystemProcessing():
                         split = obj.filename.split("\\")
                         obj.orphan_name = "$OrphanFiles/" + split[len(split) - 1]
                     """
+                    
+                    # If a data file, add size to known_filesizes
+                    if pfo.meta_type == 1 and pfo.filesize and pfo.filesize is not 0:
+                        self.known_filesizes.add(pfo.filesize)
 
                     # Add Profile FileObject (PFO) to:
                     # 1) PFO list
@@ -297,39 +311,91 @@ class FileSystemProcessing():
             f.write(xml_fi.toprettyxml(indent="  "))
 
     ###########################################################################
+    def generate_icat_cmd(self, fo):
+        """ Generate an icat command with arguments for target disk image. """
+        
+        # Set the icat command to invoke tool
+        if platform.system() == "Windows":
+            icat = "sleuthkit-4.1.3-win32" + os.sep + "bin" + os.sep + "icat.exe"
+        else:
+            icat = "icat"
+            
+        # Do a quick inode check
+        if not fo.inode:
+            return
+            
+        # Convert offset to start block
+        offset = int(self.partition_offset/512)
+            
+        # Determine file system offset of disk image
+        subp_command = [icat, 
+                        "-o", str(offset),
+                        "-i", str(self.imagefile_type),
+                        "-f", str(self.ftype_str),
+                        self.imagefile,
+                        str(fo.inode)]
+                        
+        # Return the generated command
+        return subp_command
+
+    ###########################################################################
+    def extract_fi(self, fo, out_path):
+        """ Extract a file using icat tool. """
+        
+        # Set up the icat command using helper method
+        subp_command = self.generate_icat_cmd(fo)
+
+        # Write the stdout of the icat command to a file
+        with open(out_path, 'wb') as f:
+            subprocess.call(subp_command, stdout=f)
+        f.close()
+        
+    ###########################################################################
+    def extract_fi_hash_md5(self, fo):  
+        """ Determine the MD5 hash value of icat output. """    
+
+        # Set up the icat command using helper method
+        subp_command = self.generate_icat_cmd(fo)
+        
+        # Execute icat command, capture output
+        p = subprocess.Popen(subp_command, stdout=subprocess.PIPE)
+      
+        # Generate hash from icat output
+        hasher = hashlib.md5()
+        buf = p.stdout.read()
+        hasher.update(buf)
+        
+        # Return the hash value
+        return hasher.hexdigest()
+        
+    ###########################################################################
     def extract_hive(self, tfo):
-        """ Extract a Windows Registry hive file from target data set. """
+        """ Extract a Windows Registry hive file from forensic disk image. """
+        # Specify a new output file name (preserve the full path from disk image)
         out_fn = tfo.filename
         out_fn = out_fn.replace('/','-').replace(' ','-')
         out_dir = self.outputdir + os.sep + "hives" + os.sep
         out_path = os.path.join(out_dir, out_fn)
 
+        # Check the output directory exists
+        # This is the user specified directory with a 'hives' subdirectory
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
-        # Check runs
-        if tfo.byte_runs:
-            for run in tfo.byte_runs:
-                if not run.len:
-                    print("\n      Warning: Could not extract hive file...")
-                    print("      %s" % os.path.basename(out_path))
-                    return
-
-        # Open output file and write file contents
-        with open(out_path, 'wb') as f:
-            if tfo.byte_runs:
-                contents = tfo.byte_runs.iter_contents(self.imagefile)
-                contents = b"".join(contents)
-                f.write(contents)
-        f.close()
-
+        # Extract the actual Registry hive file
+        self.extract_fi(tfo, out_path)              
+                     
+        # Calculate the MD5 hash value of the extracted hive file
+        tfo.md5 = self.extract_fi_hash_md5(tfo)                     
+                                               
         # Check the SHA-1 of fileobject VS extracted hive
+        # SHA-1 not used, but left here for legacy code
         if tfo.sha1 is not None:
             sha1 = sha1_file(out_path)
             if sha1 != tfo.sha1:
                 print("\n      Warning: SHA-1 hash mismatch for extracted hive file...")
                 print("      %s" % os.path.basename(out_path))
-        # Check the SHA-1 of fileobject VS extracted hive
+        # Check the MD5 of fileobject VS extracted hive
         elif tfo.md5 is not None:
             md5 = md5_file(out_path)
             if md5 != tfo.md5:
@@ -345,15 +411,28 @@ class FileSystemProcessing():
         print("\n>>> Processing target data set ...")
         logging.info("\n>>> DETECTED FILE SYSTEM ARTIFACTS:")
 
+        if self.imagefile.endswith(".E01"):
+            self.imagefile_type = "ewf"
+        else:
+            self.imagefile_type = "raw"
+
         # Process the target data set
         if self.xmlfile is not None:
             # If DFXML from fiwalk, parse using Objects.iterparse
             for (event, obj) in Objects.iterparse(self.xmlfile):
+                if isinstance(obj, Objects.VolumeObject):
+                    self.partition_offset = obj.partition_offset
+                    self.ftype_str = obj.ftype_str
+                    
                 if isinstance(obj, Objects.FileObject):
                     self.process_target_fi(obj)
         else:
             # If IMAGEFILE, parse using Object.iterparse (but save a DFXML file)
             for (event, obj) in Objects.iterparse(self.imagefile):
+                if isinstance(obj, Objects.VolumeObject):
+                    self.partition_offset = obj.partition_offset
+                    self.ftype_str = obj.ftype_str
+                            
                 if isinstance(obj, Objects.FileObject):
                     # Append target FileObject to master dfxml container
                     self.tds_dfxml.append(obj)
@@ -387,16 +466,26 @@ class FileSystemProcessing():
         elif tfo.meta_type == 1:
             self.target_file_count += 1
         sys.stdout.write("\r  > Dirs: {0:6}  Files: {1:6}  Matches: {2:4}".format(self.target_dir_count, self.target_file_count, self.matches_count));
-
+        
         # Get an allocated vs unallocated count (for logging)
         if tfo.is_allocated():
             self.allocated_count += 1
         else:
             self.unallocated_count += 1
+            
+        # Check if file is to be generically excluded
+        if tfo.filename:
+            if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
+                return            
 
         # Set an emply file name to solve None problems
         if not tfo.filename:
             tfo.filename = ""
+
+        # If we have a filesize that matches a known filesize, generate hash
+#        if tfo.filesize in self.known_filesizes:
+#            tfo.md5 = self.extract_fi_hash_md5(tfo)
+#            print("\n%s\t%s" % (tfo.md5, tfo.filename))
 
         # Extract hive file if found
         for hive_name in hive_names:
@@ -405,12 +494,12 @@ class FileSystemProcessing():
             else:
                 fn = ""
             if fn.endswith(hive_name) and tfo.is_allocated():
-                self.extract_hive(tfo)
-
-        # Check if file is to be generically excluded
-        if tfo.filename:
-            if (self.ignore_dotdirs and (tfo.filename.endswith("/.") or tfo.filename.endswith("/.."))):
-                return
+                # Do not extract a hive if it has 'repair' in filename
+                # This is for performance enhancement, can be removed.
+                if "repair" in fn:
+                    return
+                else:
+                    self.extract_hive(tfo)
 
         # Normalize the TFO full path/filename
         if tfo.filename:
@@ -423,6 +512,9 @@ class FileSystemProcessing():
         #### Start file system matching
         # 1) First check: Match directories and data files
         if tfo.filename_norm in self.pfos_dict:
+            
+            if tfo.meta_type == 1:
+                tfo.md5 = self.extract_fi_hash_md5(tfo) 
 
             # Match file system directories
             if tfo.meta_type == 2:
@@ -438,7 +530,7 @@ class FileSystemProcessing():
 
             # Match file system data files
             elif tfo.meta_type == 1:
-                for pfo in self.pfos_dict[tfo.filename_norm]:
+                for pfo in self.pfos_dict[tfo.filename_norm]:                
                     rank = match_file(tfo, pfo)
                     if rank == 1:
                         tfo.annos = {"matched_soft"}

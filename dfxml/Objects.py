@@ -1367,7 +1367,7 @@ class ByteRuns(object):
                 
                 import platform
                 if platform.system() == "Windows":
-                    cwd = "sleuthkit-4.2.0-win32" + os.sep + "bin" + os.sep
+                    cwd = "sleuthkit-4.1.3-win32" + os.sep + "bin" + os.sep
                     cmd = [cwd + "img_cat.exe"]
                 else:
                     cmd = ["img_cat"]
@@ -3125,6 +3125,7 @@ class CellObject(object):
         elif val == "RegExpandSz": val = "REG_EXPAND_SZ"
         elif val == "RegBinary": val = "REG_BINARY"
         elif val == "RegDword": val = "REG_DWORD"
+        elif val == "RegDwordBigEndian": val = "REG_DWORD"
         elif val == "RegLink": val = "REG_LINK"
         elif val == "RegMultiSz": val = "REG_MULTI_SZ"
         elif val == "RegResourceList": val = "REG_RESOURCE_LIST"
@@ -3280,7 +3281,9 @@ def iterparse(filename, events=("start","end"), **kwargs):
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
     #subp_command = [fiwalk_path, "-x", filename]
-    subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
+    #subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
+    #fiwalk -z -g -b -x
+    subp_command = [fiwalk_path, "-z", "-g", "-b", "-x", filename]
     if filename.endswith("xml"):
         fh = open(filename, "rb")
     else:

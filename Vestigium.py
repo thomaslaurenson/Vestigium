@@ -4,7 +4,7 @@
 Author:  Thomas Laurenson
 Email:   thomas@thomaslaurenson.com
 Website: thomaslaurenson.com
-Date:    2016/02/12
+Date:    2016/03/16
 
 Description:
 Vestigium is a proof of concept implementation of an application  profiling
@@ -221,7 +221,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
         print('       The CellXML-Registry tool is required to parse Registry entries.')
         print('       You can continue, but without Registry support...')
         # Switch to just file system analysis
-        cont = input('  > Continue processing? ([Y] or N): ')
+        cont = input('     > Continue processing? ([Y] or N): ')
         if cont.lower() == 'y' or cont.lower() == 'yes':
             mode = "file"
         else:
@@ -289,9 +289,10 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     # Create output folder (with error checking)
     if os.path.exists(outputdir) and os.path.isdir(outputdir):
         if zapdir:
-            print('\n  > Error: The specified output directory already exists...')
-            print('    %s' % outputdir)
-            delete = input('  > Delete the existing directory? ([Y] or N): ')
+            print('\nError: Vestigium.py')        
+            print('       The specified output directory already exists...')
+            print('       %s' % outputdir)
+            delete = input('     > Delete the existing directory? ([Y] or N): ')
             if delete.lower() == 'y' or delete.lower() == 'yes':
                 shutil.rmtree(outputdir)
                 os.makedirs(outputdir)
