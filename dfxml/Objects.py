@@ -3281,9 +3281,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
     #subp_command = [fiwalk_path, "-x", filename]
-    #subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
-    #fiwalk -z -g -b -x
-    subp_command = [fiwalk_path, "-z", "-g", "-b", "-x", filename]
+    subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
     if filename.endswith("xml"):
         fh = open(filename, "rb")
     else:
@@ -3409,23 +3407,36 @@ def iterparse(filename, events=("start","end"), **kwargs):
             raise e
         _logger.debug("...Done.")
 
-
-
-
 def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
-    """
-    Generator.  Yields a stream of populated HiveObjects and CellObjects, paired with an event type ("start" or "end").  The RegXMLObject do NOT have their child lists populated with this method - that is left to the calling program.
+    """ Iterparse implementation for RegXML stdout from CellXML. """
 
-    The event type interface is meant to match the interface of ElementTree's iterparse; this is simply for familiarity's sake.  DFXMLObjects and VolumeObjects are yielded with "start" when the stream of VolumeObject or FileObjects begins - that is, they are yielded after being fully constructed up to the potentially-lengthy child object stream.  FileObjects are yielded only with "end".
+    #The DFXML stream file handle.
+    fh = None
+    subp = None
+    
+    import platform
+    if platform.system() == "Windows":
+        cellxml_loc = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
+    else:
+        print("Error. Cannot parse hives using CellXML on Linux")
+        return
+        
+    #subp_command = [cellxml_loc, "-f", filename]
+    subp_command = [cellxml_loc, "-r", "-f", filename]
+    if filename.endswith("xml"):
+        fh = open(filename, "rb")
+    else:
+        subp = subprocess.Popen(subp_command, stdout=subprocess.PIPE)
+        fh = subp.stdout
 
-    @param filename: A string
-    @param events: Events.  Optional.  A tuple of strings, containing "start" and/or "end".
-    @param dfxmlobject: A DFXMLObject document.  Optional.  A DFXMLObject is created and yielded in the object stream if this argument is not supplied.
-    @param fiwalk: Optional.  Path to a particular fiwalk build you want to run.
-    """
+    _events = set()
+    for e in events:
+        if not e in ("start","end"):
+            raise ValueError("Unexpected event type: %r.  Expecting 'start', 'end'." % e)
+        _events.add(e)
 
     #The RegXML stream file handle.
-    fh = open(filename, "rb")
+    #fh = open(filename, "rb")
     _events = set()
     for e in events:
         if not e in ("start","end"):
