@@ -161,7 +161,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     # Operating system check with tool dependency check
     if platform.system() == "Windows":
         # fiwalk check
-        fiwalk = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
+        fiwalk = "fiwalk" + os.sep + "fiwalk-4.2.0.exe"
         if not check_program(fiwalk):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the fiwalk tool from The Sleuth Kit.')
@@ -169,7 +169,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             print('       Now Exiting...')
             sys.exit(1)
         # CellXML-Registry check
-        cellxml = "CellXML-Registry-1.2.1" + os.sep + "CellXML-Registry-1.2.1.exe"
+        cellxml = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
         if not check_program(cellxml):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the CellXML-Registry tool.')

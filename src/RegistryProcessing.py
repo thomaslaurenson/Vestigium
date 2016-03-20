@@ -289,7 +289,7 @@ class RegistryProcessing():
                         # Generate RegXML
                         import subprocess
                         devnull = open(os.devnull, 'w')
-                        tool = "CellXML-Registry-1.2.1" + os.sep + "CellXML-Registry-1.2.1.exe"
+                        tool = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
                         subp_command = [tool,
                                         "-r",
                                         "-f",
