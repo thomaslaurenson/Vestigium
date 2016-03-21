@@ -3276,7 +3276,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
     
     import platform
     if platform.system() == "Windows":
-        fiwalk_loc = "fiwalk" + os.sep + "fiwalk-4.2.0.exe"
+        fiwalk_loc = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
         fiwalk_path = kwargs.get(fiwalk_loc, fiwalk_loc)
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
@@ -3415,12 +3415,30 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     subp = None
     
     import platform
+    import subprocess 
+    
     if platform.system() == "Windows":
-        cellxml_loc = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
+        cellxml_loc = "CellXML-Registry-1.3.1" + os.sep + "CellXML-Registry-1.3.1.exe"
     else:
         print("Error. Cannot parse hives using CellXML on Linux")
         return
         
+    # Perform a quick test to ensure hive file is parsable
+    # This uses the -c feature in CellXML-Registry
+    testcmd = [cellxml_loc, '-c', '-f', filename]
+
+    p = subprocess.Popen(testcmd, 
+                         stdin = subprocess.PIPE, 
+                         stdout = subprocess.PIPE, 
+                         stderr = subprocess.PIPE,
+                         bufsize = -1)
+    output, error = p.communicate()
+    
+    # If exit code of CellXML-Registry is not 0, exit.
+    # Probably should not silently exit (add error in future)
+    if p.returncode != 0:
+        return
+    
     #subp_command = [cellxml_loc, "-f", filename]
     subp_command = [cellxml_loc, "-r", "-f", filename]
     if filename.endswith("xml"):

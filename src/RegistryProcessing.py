@@ -282,30 +282,30 @@ class RegistryProcessing():
                     regxml_count += 1
 
         # If no RegXML files were found, we need to generate RegXML
-        if regxml_count == 0:
-            for fi in registry_files:
-                for rootkey in self.target_hives:
-                    if fi.lower().endswith(rootkey.lower()):
-                        # Generate RegXML
-                        import subprocess
-                        devnull = open(os.devnull, 'w')
-                        tool = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
-                        subp_command = [tool,
-                                        "-r",
-                                        "-f",
-                                        fi]
+        # if regxml_count == 0:
+            # for fi in registry_files:
+                # for rootkey in self.target_hives:
+                    # if fi.lower().endswith(rootkey.lower()):
+                        # # Generate RegXML
+                        # import subprocess
+                        # devnull = open(os.devnull, 'w')
+                        # tool = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
                         # subp_command = [tool,
+                                        # "-r",
                                         # "-f",
                                         # fi]
-                        #print("CMD", subp_command)
-                        subprocess.call(subp_command, stdout=devnull, stderr=devnull)
+                        # # subp_command = [tool,
+                                        # # "-f",
+                                        # # fi]
+                        # #print("CMD", subp_command)
+                        # subprocess.call(subp_command, stdout=devnull, stderr=devnull)
 
         # Try again to classify required target hives and hive files
         if regxml_count == 0:
             registry_files = glob.glob(self.hives_dir + "*")
             for fi in registry_files:
                 for rootkey in self.target_hives:
-                    if fi.lower().endswith(rootkey.lower() + ".xml"):
+                    if fi.lower().endswith(rootkey.lower()):
                         self.to_process[rootkey].append(fi)
 
         logging.info("\n>>> Target Registry hive files:")
