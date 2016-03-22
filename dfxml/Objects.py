@@ -3276,12 +3276,13 @@ def iterparse(filename, events=("start","end"), **kwargs):
     
     import platform
     if platform.system() == "Windows":
-        fiwalk_loc = "fiwalk" + os.sep + "fiwalk-0.6.3.exe"
+        fiwalk_loc = "fiwalk" + os.sep + "fiwalk-4.2.0.exe"
         fiwalk_path = kwargs.get(fiwalk_loc, fiwalk_loc)
     else:
         fiwalk_path = kwargs.get("fiwalk", "fiwalk")
     #subp_command = [fiwalk_path, "-x", filename]
-    subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
+    #subp_command = [fiwalk_path, "-z", "-M", "-x", filename]
+    subp_command = [fiwalk_path, "-z", "-g", "-b", "-x", filename]
     if filename.endswith("xml"):
         fh = open(filename, "rb")
     else:

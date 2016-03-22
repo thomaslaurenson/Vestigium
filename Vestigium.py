@@ -169,7 +169,7 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
             print('       Now Exiting...')
             sys.exit(1)
         # CellXML-Registry check
-        cellxml = "CellXML-Registry-1.3.0" + os.sep + "CellXML-Registry-1.3.0.exe"
+        cellxml = "CellXML-Registry-1.3.1" + os.sep + "CellXML-Registry-1.3.1.exe"
         if not check_program(cellxml):
             print('\nError: Vestigium.py')
             print('       The Vestigium.py module requires the CellXML-Registry tool.')
