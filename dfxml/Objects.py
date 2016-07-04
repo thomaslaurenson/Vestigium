@@ -3410,7 +3410,7 @@ def iterparse(filename, events=("start","end"), **kwargs):
 
 def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     """ Iterparse implementation for RegXML stdout from CellXML. """
-
+    
     #The DFXML stream file handle.
     fh = None
     subp = None
@@ -3426,19 +3426,19 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
         
     # Perform a quick test to ensure hive file is parsable
     # This uses the -c feature in CellXML-Registry
-    testcmd = [cellxml_loc, '-c', '-f', filename]
-
-    p = subprocess.Popen(testcmd, 
-                         stdin = subprocess.PIPE, 
-                         stdout = subprocess.PIPE, 
-                         stderr = subprocess.PIPE,
-                         bufsize = -1)
-    output, error = p.communicate()
-    
-    # If exit code of CellXML-Registry is not 0, exit.
-    # Probably should not silently exit (add error in future)
-    if p.returncode != 0:
-        return
+    if not filename.endswith("xml"):
+        testcmd = [cellxml_loc, '-c', '-f', filename]
+        p = subprocess.Popen(testcmd, 
+                             stdin = subprocess.PIPE, 
+                             stdout = subprocess.PIPE, 
+                             stderr = subprocess.PIPE,
+                             bufsize = -1)
+        output, error = p.communicate()
+        
+        # If exit code of CellXML-Registry is not 0, exit.
+        # Probably should not silently exit (add error in future)
+        if p.returncode != 0:
+            return
     
     #subp_command = [cellxml_loc, "-f", filename]
     subp_command = [cellxml_loc, "-r", "-f", filename]
@@ -3447,13 +3447,7 @@ def iterparse_CellObjects(filename, events=("start","end"), **kwargs):
     else:
         subp = subprocess.Popen(subp_command, stdout=subprocess.PIPE)
         fh = subp.stdout
-
-    _events = set()
-    for e in events:
-        if not e in ("start","end"):
-            raise ValueError("Unexpected event type: %r.  Expecting 'start', 'end'." % e)
-        _events.add(e)
-
+        
     #The RegXML stream file handle.
     #fh = open(filename, "rb")
     _events = set()

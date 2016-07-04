@@ -260,7 +260,7 @@ class RegistryProcessing():
         logging.info("\n>>> Target Registry hives:")
         for rootkey in self.target_hives:
             logging.info("  > %s" % rootkey)
-
+            
     ###########################################################################
     def parse_target(self):
         """ Parse target Registry hive files. """
@@ -270,7 +270,7 @@ class RegistryProcessing():
         # Generate RegXML or fetch each needed target hive file
         if self.hives_dir is not None:
             # Fetch all Registry related files
-            registry_files = glob.glob(self.hives_dir + "*")
+            registry_files = glob.glob(self.hives_dir + os.sep + "*.xml")
 
         # Classify required target hives and hive files
         regxml_count = 0
@@ -313,7 +313,7 @@ class RegistryProcessing():
             for v in self.to_process[k]:
                 logging.info("  > %s\t%s" % (k,v))
                 self.hive_processed_count += 1
-
+             
         # Start processing each Registry hive
         logging.info("\n>>> DETECTED REGISTRY ARTIFACTS:")
         for rootkey in self.target_hives:
@@ -325,7 +325,6 @@ class RegistryProcessing():
             for hive in self.to_process[rootkey]:
                 self.active_hive = hive
                 self.active_rootkey = rootkey
-
                 for (event, obj) in Objects.iterparse_CellObjects(hive):
                     if isinstance(obj, Objects.CellObject):
                         obj.rootkey = rootkey
@@ -343,7 +342,6 @@ class RegistryProcessing():
     ###########################################################################
     def process_target_co(self, tco):
         """ Process each Target CellObject (TCO). """
-
         # Registry count progress indicator
         if tco.name_type == 'k':
             self.target_key_count += 1

@@ -393,8 +393,9 @@ python3.4 Vestigium.py ~/TDS/1-install.raw /
     
     # File system elapsed time
     fs_elapsed = timeit.default_timer() - fs_start_time
-    
-    hives_dir = outputdir + os.sep + "hives" + os.sep
+
+    if hives_dir is None:
+        hives_dir = outputdir + os.sep + "hives" + os.sep
     
     ###################################
     # Perform Windows Registry analysis
